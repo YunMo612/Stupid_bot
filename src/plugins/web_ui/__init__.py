@@ -5,16 +5,17 @@
 import os
 import re
 import zipfile
+import asyncio
 import nonebot
 from nonebot.plugin import PluginMetadata
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 __plugin_meta__ = PluginMetadata(
     name="Web UI 控制台",
     description="支持配置修改、插件动态管理与热更新。",
-    usage="前端入口: http://你的IP:8080/ui/",
+    usage="前端入口: http://0.0.0.0:8080/ui/",
     type="application",
 )
 
@@ -31,7 +32,6 @@ class PluginToggle(BaseModel):
 ENV_PATH = ".env"
 PLUGIN_DIR = os.path.join(os.getcwd(), "src", "plugins")
 
-# (省略的 /api/system/status 和 /api/config/network 接口保持不变...)
 @app.get("/api/system/status")
 async def get_system_status():
     return {"status": "online", "framework": "NoneBot2 + FastAPI"}
@@ -57,71 +57,119 @@ async def update_network_config(config: NetworkConfig):
     with open(ENV_PATH, "w", encoding="utf-8") as f: f.write(content)
     return {"status": "success", "message": "已成功写入 .env (重启后生效)"}
 
-# ==================== 🌟 新增：实时日志 API ====================
-@app.get("/api/logs/latest")
-async def get_latest_logs():
-    """读取今天最新的日志文件（为了性能，截取最后 300 行）"""
-    log_dir = os.path.join(os.getcwd(), "logs")
-    if not os.path.exists(log_dir):
-        return {"status": "error", "logs": "日志总目录不存在，等待框架生成...", "file": ""}
+# ==================== 🌟 终极进化：WebSocket 实时日志引擎 ====================
+@app.websocket("/api/logs/ws")
+async def websocket_logs(websocket: WebSocket):
+    await websocket.accept()
+    last_mtime = 0  
     
-    # 1. 找最新的日期文件夹 (按名字倒序，第一个就是最新的)
-    folders = sorted([f for f in os.listdir(log_dir) if os.path.isdir(os.path.join(log_dir, f))], reverse=True)
-    if not folders:
-        return {"status": "error", "logs": "暂无日期文件夹。", "file": ""}
-        
-    latest_folder = os.path.join(log_dir, folders[0])
-    
-    # 2. 找文件夹里最新的 .log 文件
-    files = sorted([f for f in os.listdir(latest_folder) if f.endswith(".log")], reverse=True)
-    if not files:
-        return {"status": "error", "logs": f"[{folders[0]}] 文件夹下暂无日志文件。", "file": ""}
-        
-    latest_file = os.path.join(latest_folder, files[0])
-    
-    # 3. 读取最后 300 行数据
     try:
-        with open(latest_file, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-            # 取最后300行，防止前端一次性渲染数万行卡死
-            logs = "".join(lines[-300:]) 
-            return {"status": "success", "logs": logs, "file": f"{folders[0]}/{files[0]}"}
-    except Exception as e:
-        return {"status": "error", "logs": f"读取日志文件失败: {e}", "file": ""}
+        while True:
+            log_dir = os.path.join(os.getcwd(), "logs")
+            if not os.path.exists(log_dir):
+                await asyncio.sleep(1)
+                continue
+            
+            folders = sorted([f for f in os.listdir(log_dir) if os.path.isdir(os.path.join(log_dir, f))], reverse=True)
+            if not folders:
+                await asyncio.sleep(1)
+                continue
+                
+            latest_folder = os.path.join(log_dir, folders[0])
+            files = sorted([f for f in os.listdir(latest_folder) if f.endswith(".log")], reverse=True)
+            if not files:
+                await asyncio.sleep(1)
+                continue
+                
+            latest_file = os.path.join(latest_folder, files[0])
+            
+            current_mtime = os.stat(latest_file).st_mtime
+            
+            if current_mtime != last_mtime:
+                try:
+                    with open(latest_file, "r", encoding="utf-8") as f:
+                        lines = f.readlines()
+                        logs = "".join(lines[-300:])
+                    
+                    filtered_logs = "\n".join([line for line in logs.split("\n") if "GET /api/" not in line and "GET /ui" not in line])
+                    
+                    await websocket.send_json({"status": "success", "logs": filtered_logs, "file": f"{folders[0]}/{files[0]}"})
+                    last_mtime = current_mtime
+                except Exception:
+                    pass
+            
+            await asyncio.sleep(0.5)
+            
+    except WebSocketDisconnect:
+        pass
 
-# ==================== 🌟 核心：插件管理 API ====================
+# ==================== 📦 插件列表 API ====================
 @app.get("/api/plugins")
-async def get_plugin_list():
-    """扫描目录下的插件状态"""
-    plugins = []
-    if os.path.exists(PLUGIN_DIR):
-        for item in os.listdir(PLUGIN_DIR):
-            if item == "__pycache__" or item.startswith("."): continue
-            
-            # 识别被我们特殊标记的禁用文件夹
-            is_disabled = item.startswith("_disabled_")
-            display_name = item.replace("_disabled_", "") if is_disabled else item
-            
-            plugins.append({
-                "name": display_name,
-                "raw_name": item,
-                "status": "disabled" if is_disabled else "active"
-            })
-    return {"plugins": sorted(plugins, key=lambda x: x["name"])}
+async def get_plugins():
+    plugins_dir = os.path.join(os.getcwd(), "src", "plugins")
+    plugin_list = []
+    
+    if not os.path.exists(plugins_dir):
+        return {"plugins": []}
+        
+    for folder in os.listdir(plugins_dir):
+        if folder == "__pycache__" or os.path.isfile(os.path.join(plugins_dir, folder)):
+            continue
+        
+        is_disabled = folder.startswith("_")
+        base_name = folder.lstrip("_")
+        
+        plugin_list.append({
+            "name": base_name,
+            "raw_name": folder, 
+            "status": "disabled" if is_disabled else "active"
+        })
+        
+    plugin_list.sort(key=lambda x: x["name"])
+    return {"plugins": plugin_list}
+
+# ==================== 🔌 插件开关 API (带唤醒魔法) ====================
+class ToggleRequest(BaseModel):
+    raw_name: str
+    target_status: str
 
 @app.post("/api/plugins/toggle")
-async def toggle_plugin(req: PluginToggle):
-    """通过重命名文件夹实现动态禁用/启用，触发底层热重载"""
-    old_path = os.path.join(PLUGIN_DIR, req.raw_name)
-    if not os.path.exists(old_path): return {"status": "error", "msg": "找不到插件目录"}
+async def toggle_plugin(req: ToggleRequest):
+    plugins_dir = os.path.join(os.getcwd(), "src", "plugins")
     
-    new_name = f"_disabled_{req.raw_name}" if req.target_status == "disabled" else req.raw_name.replace("_disabled_", "")
-    new_path = os.path.join(PLUGIN_DIR, new_name)
+    # 拿到干净的插件名 (去掉可能存在的下划线)
+    base_name = req.raw_name.lstrip("_")
     
-    os.rename(old_path, new_path)
-    # 返回成功，此时底层 Uvicorn 会察觉到文件变化，在后台自动重启！
-    return {"status": "success", "msg": f"插件已{'禁用' if req.target_status == 'disabled' else '启用'}！系统正在热重载..."}
+    active_path = os.path.join(plugins_dir, base_name)
+    disabled_path = os.path.join(plugins_dir, f"_{base_name}")
+    
+    try:
+        if req.target_status == "disabled":
+            if os.path.exists(active_path):
+                os.rename(active_path, disabled_path)
+                
+                # 🌟 核心魔法：强行戳醒 .env
+                env_path = os.path.join(os.getcwd(), ".env")
+                if os.path.exists(env_path):
+                    os.utime(env_path, None)
+                    
+                return {"status": "success", "msg": f"已禁用 {base_name}"}
+        else:
+            if os.path.exists(disabled_path):
+                os.rename(disabled_path, active_path)
+                
+                # 🌟 核心魔法：强行戳醒 .env
+                env_path = os.path.join(os.getcwd(), ".env")
+                if os.path.exists(env_path):
+                    os.utime(env_path, None)
+                    
+                return {"status": "success", "msg": f"已启用 {base_name}"}
+                
+        return {"status": "error", "msg": "找不到该插件的物理文件夹！"}
+    except Exception as e:
+        return {"status": "error", "msg": f"操作失败: {e}"}
 
+# ==================== ☁️ ZIP 热安装 API ====================
 @app.post("/api/plugins/upload")
 async def upload_plugin_zip(file: UploadFile = File(...)):
     """接收 Zip 并直接解压到插件目录"""
@@ -130,14 +178,19 @@ async def upload_plugin_zip(file: UploadFile = File(...)):
         
     temp_zip = os.path.join(PLUGIN_DIR, file.filename)
     try:
-        # 1. 保存 zip
         with open(temp_zip, "wb") as f:
             f.write(await file.read())
-        # 2. 解压到插件目录
+            
         with zipfile.ZipFile(temp_zip, 'r') as zip_ref:
             zip_ref.extractall(PLUGIN_DIR)
-        # 3. 销毁安装包
+            
         os.remove(temp_zip)
+        
+        # 🌟 安装插件后，顺手也戳醒一下框架
+        env_path = os.path.join(os.getcwd(), ".env")
+        if os.path.exists(env_path):
+            os.utime(env_path, None)
+            
         return {"status": "success", "msg": "✅ 安装完成！系统已热重载。"}
     except Exception as e:
         if os.path.exists(temp_zip): os.remove(temp_zip)
