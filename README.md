@@ -1,6 +1,6 @@
 # <center>🤪 Stupid_Bot 🤪
-#### <center>一个成分复杂的QQbot
-<center> ⚠️使用Vibe Coding⚠️ </center>
+### <center>一个成分复杂的QQbot
+### <center> ⚠️使用Vibe Coding⚠️ </center>
 
 ---
 
