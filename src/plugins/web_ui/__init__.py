@@ -128,7 +128,7 @@ async def get_plugins():
     plugin_list.sort(key=lambda x: x["name"])
     return {"plugins": plugin_list}
 
-# ==================== 🔌 插件开关 API (带唤醒魔法) ====================
+# ==================== 🔌 插件开关 API ====================
 class ToggleRequest(BaseModel):
     raw_name: str
     target_status: str
@@ -136,33 +136,30 @@ class ToggleRequest(BaseModel):
 @app.post("/api/plugins/toggle")
 async def toggle_plugin(req: ToggleRequest):
     plugins_dir = os.path.join(os.getcwd(), "src", "plugins")
-    
-    # 拿到干净的插件名 (去掉可能存在的下划线)
     base_name = req.raw_name.lstrip("_")
-    
     active_path = os.path.join(plugins_dir, base_name)
     disabled_path = os.path.join(plugins_dir, f"_{base_name}")
     
+    # 🌟 终极魔法：我们去戳 plugins 目录下的 __init__.py
+    # 这个文件绝对会被监控！如果没有我们就动态建一个。
+    trigger_file = os.path.join(plugins_dir, "__init__.py")
+    
+    def trigger_reload():
+        if not os.path.exists(trigger_file):
+            with open(trigger_file, "w", encoding="utf-8") as f:
+                f.write("# Auto-generated to trigger reload\n")
+        os.utime(trigger_file, None)
+
     try:
         if req.target_status == "disabled":
             if os.path.exists(active_path):
                 os.rename(active_path, disabled_path)
-                
-                # 🌟 核心魔法：强行戳醒 .env
-                env_path = os.path.join(os.getcwd(), ".env")
-                if os.path.exists(env_path):
-                    os.utime(env_path, None)
-                    
+                trigger_reload() # 触发重启！
                 return {"status": "success", "msg": f"已禁用 {base_name}"}
         else:
             if os.path.exists(disabled_path):
                 os.rename(disabled_path, active_path)
-                
-                # 🌟 核心魔法：强行戳醒 .env
-                env_path = os.path.join(os.getcwd(), ".env")
-                if os.path.exists(env_path):
-                    os.utime(env_path, None)
-                    
+                trigger_reload() # 触发重启！
                 return {"status": "success", "msg": f"已启用 {base_name}"}
                 
         return {"status": "error", "msg": "找不到该插件的物理文件夹！"}
