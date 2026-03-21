@@ -100,4 +100,10 @@ ROUTER_URL="http://你的路由IP:端口/v1/chat/completions"
 # 开启热重载 (重要：WebUI 的插件热插拔及拖拽安装极度依赖此项配置)
 RELOAD=true
 ```
-
+## 5.启动Bot
+```bash
+screen -S bot
+screen -x bot
+cd mybot
+nb run --reload
+```
