@@ -1,6 +1,6 @@
-# 🌐 Stupid_Bot 终端控制中枢
-
-# 🌐 PRTS_Bot 终端控制中枢
+# <center>🤪 Stupid_Bot 🤪
+#### <center>一个成分复杂的QQbot
+<center> ⚠️使用Vibe Coding⚠️ </center>
 
 [![NoneBot2](https://img.shields.io/badge/NoneBot-2.0.0+-red.svg)](https://github.com/nonebot/nonebot2)
 [![NapCat](https://img.shields.io/badge/Napcat-3.18.3+-e6522c.svg)](https://github.com/NapNeko/NapCatQQ)
