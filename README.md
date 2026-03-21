@@ -1,8 +1,10 @@
 # 🌐 Stupid_Bot 终端控制中枢
 
-![NoneBot2](https://img.shields.io/badge/NoneBot-2.0.0+-red.svg)
-![Napcat](https://img.shields.io/badge/Napcat-3.18.3+-red.svg)
-![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
+# 🌐 PRTS_Bot 终端控制中枢
+
+[![NoneBot2](https://img.shields.io/badge/NoneBot-2.0.0+-red.svg)](https://github.com/nonebot/nonebot2)
+[![NapCat](https://img.shields.io/badge/Napcat-3.18.3+-e6522c.svg)](https://github.com/NapNeko/NapCatQQ)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009688.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
