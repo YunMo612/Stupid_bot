@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRTS 终端控制台</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./app.js"></script>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="logo"><div class="logo-line"></div>PRTS_UI</div>
+        <ul class="menu-list">
+            <li class="menu-item active" onclick="switchTab('page-info', this, '基础信息')"><span class="icon">💻</span> 基础信息</li>
+            <li class="menu-item" onclick="switchTab('page-network', this, '网络配置')"><span class="icon">📶</span> 网络配置</li>
+            <li class="menu-item" onclick="switchTab('page-logs', this, '神经日志')"><span class="icon">📝</span> 神经日志</li>
+            <li class="menu-item" onclick="switchTab('page-plugins', this, '插件管理')"><span class="icon">📦</span> 插件管理</li>
+        </ul>
+        <div class="bottom-actions">
+            <button class="action-btn" id="theme-btn" onclick="toggleTheme(event)">🌙 切换日间</button>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <header class="topbar"><span style="margin-right: 10px;">三</span> <span id="topbar-title">基础信息</span></header>
+        <div class="content-body">
+            
+            <div id="page-info" class="page-container active">
+                <div class="card">
+                    <h3>链路诊断 (Diagnostics)</h3>
+                    <div id="status-box" class="console-box">等待前端指令...</div>
+                    <button class="primary-btn" onclick="checkSystem()">获取框架状态</button>
+                    <button class="primary-btn" onclick="checkAI()">侦测大模型脑电波</button>
+                </div>
+                <div class="card">
+                    <h3>系统概览</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">当前正在运行 NoneBot2 容器实例。<br>监听端口: 0.0.0.0:8080</p>
+                </div>
+            </div>
+
+            <div id="page-network" class="page-container">
+                <div class="card">
+                    <h3>大模型 API 路由配置</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">直接修改下方输入框，点击保存将实时写入服务器的 .env 配置文件中。</p>
+                    <div class="form-group">
+                        <label class="form-label">LLAMA_SERVER_URL =</label>
+                        <input type="text" id="input-llama" class="config-input" placeholder="读取中...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ROUTER_URL =</label>
+                        <input type="text" id="input-router" class="config-input" placeholder="读取中...">
+                    </div>
+                    <div style="display: flex; align-items: center; margin-top: 30px;">
+                        <button class="primary-btn" id="btn-save-net" onclick="saveNetworkConfig()">💾 保存配置到 .env</button>
+                        <span id="save-msg" style="margin-left: 15px; font-size: 0.95rem; font-weight: bold;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-logs" class="page-container">
+                <div class="card" style="height: calc(100vh - 160px); display: flex; flex-direction: column;">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin-bottom: 0;">📝 终端实时日志</h3>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="log-file-name" style="color: var(--text-muted); font-size: 0.8rem; font-family: 'Consolas', monospace;">等待读取...</span>
+                            <button class="toggle-btn btn-enable" onclick="loadLogs()" style="font-size: 0.8rem; padding: 4px 10px;">手动刷新</button>
+                            <button class="toggle-btn btn-disable" id="auto-scroll-btn" onclick="toggleAutoScroll()" style="font-size: 0.8rem; padding: 4px 10px;">自动滚动: 开启</button>
+                        </div>
+                    </div>
+
+                    <div id="log-console" class="console-box" style="flex: 1; margin-bottom: 0; overflow-y: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.5;">[SYSTEM] 正在连接日志管道...</div>
+                </div>
+            </div>
+
+            <div id="page-plugins" class="page-container">
+                <div class="card" style="height: calc(100vh - 160px); display: flex; flex-direction: column;">
+                    <h3>🔌 已扫描的模块节点</h3>
+                    
+                    <div id="plugin-list" style="flex: 1; overflow-y: auto; margin-bottom: 20px;">
+                        加载中...
+                    </div>
+                    
+                    <div id="drop-zone" class="drop-zone">
+                        <div style="font-size: 32px; margin-bottom: 10px;">📦</div>
+                        <p id="drop-msg" style="font-weight: bold; margin-bottom: 5px;">将包含 __init__.py 的插件 .zip 包拖拽到此处进行热安装</p>
+                        <p style="font-size: 0.8rem; opacity: 0.7;">安装完成后，框架会自动热更新并生效</p>
+                        <input type="file" id="file-input" hidden accept=".zip">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="/ui/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# Python 缓存和虚拟环境
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# 敏感配置文件 (绝对不能提交！)
+.env
+.env.*
+*.json  # 如果你的 json 存了用户数据，建议也不要提交，或者只提交一个 demo.json
+
+# 日志与数据库
+logs/
+*.log
+*.db
+*.sqlite3
