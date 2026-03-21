@@ -2,13 +2,18 @@
 #### <center>一个成分复杂的QQbot
 <center> ⚠️使用Vibe Coding⚠️ </center>
 
+---
+
 [![NoneBot2](https://img.shields.io/badge/NoneBot-2.0.0+-red.svg)](https://github.com/nonebot/nonebot2)
 [![NapCat](https://img.shields.io/badge/Napcat-3.18.3+-e6522c.svg)](https://github.com/NapNeko/NapCatQQ)
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009688.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
+---
+
 基于 **NoneBot2** 与 **FastAPI** 构建的现代化、模块化 QQ 机器人控制框架。不仅拥有强大的 AI 中枢与群管基建，更自带一个支持**前后端分离、动态配置修改、ZIP 拖拽热更新**的独立可视化 Web 控制台。
+
 ---
  - [ ] FastAPI
  - [ ] WebUI完善
