@@ -19,3 +19,4 @@ logs/
 
 # 忽略真实的本地数据库文件
 bot_data.json
+bg.png
