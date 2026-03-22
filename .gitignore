@@ -19,4 +19,6 @@ logs/
 
 # 忽略真实的本地数据库文件
 bot_data.json
-bg.png
+
+# 忽略 WebUI 的自定义背景图
+src/plugins/web_ui/frontend/background/bg.jpg
