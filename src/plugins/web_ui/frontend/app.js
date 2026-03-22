@@ -1,5 +1,5 @@
 // ==========================================
-// PRTS 终端控制台 - 核心逻辑脚本 (WebSocket 完全体)
+// PRTS 终端控制台 - 核心逻辑脚本 (完全体 v4)
 // ==========================================
 
 // === 1. 核心状态与主题切换 ===
@@ -10,58 +10,90 @@ function performThemeSwitch() {
     const body = document.body;
     const themeBtn = document.getElementById('theme-btn');
     isDarkTheme = !isDarkTheme;
+    
     if (isDarkTheme) {
-        body.classList.remove('light-theme');
-        themeBtn.innerHTML = '🌙 切换日间';
+        body.classList.add('dark-theme');
+        themeBtn.innerHTML = '☀️'; // 提示切到白天
     } else {
-        body.classList.add('light-theme');
-        themeBtn.innerHTML = '🌌 切换夜间';
+        body.classList.remove('dark-theme');
+        themeBtn.innerHTML = '🌙'; // 提示切到黑夜
     }
 }
 
 async function toggleTheme(event) {
     if (isTransitioning) return;
     if (!document.startViewTransition) { performThemeSwitch(); return; }
+    
     isTransitioning = true;
-    const x = event.clientX, y = event.clientY;
-    const endRadius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    
+    // 获取悬浮按钮的中心点，作为动画圆心
+    const btn = event.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    
+    // 计算屏幕最远角，确保遮罩能覆盖全屏
+    const endRadius = Math.hypot(
+        Math.max(x, window.innerWidth - x), 
+        Math.max(y, window.innerHeight - y)
+    );
+    
     document.documentElement.classList.add('theme-transitioning');
-    const transition = document.startViewTransition(() => { performThemeSwitch(); });
+    
+    const transition = document.startViewTransition(() => { 
+        performThemeSwitch(); 
+    });
+    
     await transition.ready;
+    
     const start = performance.now();
-    const duration = 600; 
+    const duration = 650; // 动画时长稍微拉长，让羽化过程更细腻
+    
     function animateMask(time) {
         let progress = (time - start) / duration;
         if (progress > 1) progress = 1;
+        
+        // 缓动算法：前段加速，后段平滑减速
         const easeOut = 1 - Math.pow(1 - progress, 4);
-        const currentRadius = endRadius * easeOut;
+        let currentRadius = endRadius * easeOut;
+        
+        // 防止初始半径过小导致 CSS calc(radius - 15px) 出现负数渲染错误
+        if (currentRadius < 15) currentRadius = 15;
+        
+        // 逐帧更新 CSS 变量，传递给 mask-image
         document.documentElement.style.setProperty('--mask-x', x + 'px');
         document.documentElement.style.setProperty('--mask-y', y + 'px');
         document.documentElement.style.setProperty('--mask-radius', currentRadius + 'px');
-        if (progress < 1) requestAnimationFrame(animateMask);
-        else { document.documentElement.classList.remove('theme-transitioning'); isTransitioning = false; }
+        
+        if (progress < 1) {
+            requestAnimationFrame(animateMask);
+        } else { 
+            document.documentElement.classList.remove('theme-transitioning'); 
+            isTransitioning = false; 
+        }
     }
+    
     requestAnimationFrame(animateMask);
 }
 
-// === 2. 菜单栏切换逻辑 (包含 WebSocket 管控) ===
-let ws = null; // 全局保存 WebSocket 实例
+// === 2. 菜单栏切换逻辑 ===
+let ws = null;
 
 function switchTab(pageId, element, title) {
     document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
     element.classList.add('active');
-    document.getElementById('topbar-title').innerText = title;
+    
+    const topbarTitle = document.getElementById('topbar-title');
+    if(topbarTitle) topbarTitle.innerText = title;
     
     document.querySelectorAll('.page-container').forEach(page => page.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
     
-    // 切换页面时，掐断日志水管，节省性能
     if (ws) { ws.close(); ws = null; }
     
-    // 按需加载
     if (pageId === 'page-network') loadNetworkConfig();
     if (pageId === 'page-plugins') loadPlugins();
-    if (pageId === 'page-logs') initLogWebSocket(); // 激活日志管道
+    if (pageId === 'page-logs') initLogWebSocket(); 
 }
 
 // === 3. 系统与大模型监控 API ===
@@ -85,7 +117,7 @@ async function checkAI() {
     } catch (e) { box.innerHTML = `<span style="color:#bf616a;">[ERROR]</span> 大模型节点未响应。请检查 prts_ai 模块是否加载。`; }
 }
 
-// === 4. 网络配置读取与保存 API ===
+// === 4. 网络配置读取与保存 ===
 async function loadNetworkConfig() {
     try {
         const res = await fetch('/api/config/network');
@@ -111,7 +143,7 @@ async function saveNetworkConfig() {
     setTimeout(() => { msg.innerText = ""; }, 3000);
 }
 
-// === 5. 插件动态管理 API ===
+// === 5. 插件动态管理 ===
 async function loadPlugins() {
     const list = document.getElementById('plugin-list');
     try {
@@ -125,14 +157,23 @@ async function loadPlugins() {
             const btnText = isActive ? '禁用模块' : '启用模块';
             const statusText = isActive ? 'ACTIVE' : 'DISABLED';
             const color = isActive ? '#a3be8c' : '#bf616a';
+            
+            const isCore = p.name === 'web_ui' || p.name === 'common_core';
+            const deleteBtnHtml = isCore ? 
+                `<span class="core-protect-text">[核心锁定]</span>` : 
+                `<button class="delete-btn" onclick="openDeleteModal('${p.raw_name}')">🗑️ 销毁</button>`;
+
             list.innerHTML += `
                 <div class="plugin-item">
                     <div class="plugin-info">
                         <div class="status-dot ${dotClass}"></div>
                         <span style="color:var(--text-main); font-family: 'Consolas', monospace; font-size: 1.1rem;">${p.name}</span>
-                        <span style="font-size: 0.8rem; color:${color}; border: 1px solid ${color}; padding: 2px 6px; border-radius: 4px;">${statusText}</span>
+                        <span style="font-size: 0.8rem; color:${color}; border: 1px solid ${color}; padding: 2px 6px; border-radius: 4px; margin-left: 10px;">${statusText}</span>
                     </div>
-                    <button class="toggle-btn ${btnClass}" onclick="togglePlugin('${p.raw_name}', '${isActive ? 'disabled' : 'active'}')">${btnText}</button>
+                    <div style="display: flex; align-items: center;">
+                        <button class="toggle-btn ${btnClass}" onclick="togglePlugin('${p.raw_name}', '${isActive ? 'disabled' : 'active'}')">${btnText}</button>
+                        ${deleteBtnHtml}
+                    </div>
                 </div>
             `;
         });
@@ -147,12 +188,61 @@ async function togglePlugin(rawName, targetStatus) {
     } catch(e) { console.error("切换失败"); }
 }
 
-// === 6. Zip 插件拖拽上传系统 ===
+// === 弹窗状态管理机制 ===
+let currentPluginToDelete = null;
+
+// 1. 打开自定义确认弹窗
+function openDeleteModal(rawName) {
+    currentPluginToDelete = rawName;
+    const cleanName = rawName.replace(/^_/, ""); 
+    document.getElementById('delete-plugin-name').innerText = cleanName;
+    document.getElementById('delete-modal').classList.add('show');
+}
+
+// 2. 关闭弹窗
+function closeDeleteModal() {
+    currentPluginToDelete = null;
+    document.getElementById('delete-modal').classList.remove('show');
+}
+
+// 3. 💥 确认执行物理销毁 (从弹窗内部触发)
+async function executeDelete() {
+    if (!currentPluginToDelete) return;
+    const rawName = currentPluginToDelete;
+    
+    // 先关掉弹窗
+    closeDeleteModal();
+    
+    // 界面进入加载状态
+    document.getElementById('plugin-list').innerHTML = "<div style='color:#bf616a; text-align:center; padding: 20px;'>🗑️ 正在执行物理清除，底层引擎即将重启...</div>";
+    
+    try {
+        const res = await fetch('/api/plugins/delete', { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({raw_name: rawName}) 
+        });
+        const data = await res.json();
+        
+        if (data.status === 'success') { 
+            setTimeout(() => { loadPlugins(); }, 2000); 
+        } else { 
+            alert(data.msg); 
+            loadPlugins(); 
+        }
+    } catch(e) { 
+        alert("网络请求失败，销毁指令未送达。"); 
+        loadPlugins(); 
+    }
+}
+
+// === 6. Zip 插件拖拽上传 ===
 document.addEventListener("DOMContentLoaded", () => {
     const dropZone = document.getElementById("drop-zone");
     const dropMsg = document.getElementById("drop-msg");
     const fileInput = document.getElementById("file-input");
     if (!dropZone) return;
+    
     dropZone.addEventListener("click", () => fileInput.click());
     dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); dropMsg.innerText = "放开鼠标立即安装！"; });
     dropZone.addEventListener("dragleave", () => { dropZone.classList.remove("dragover"); dropMsg.innerText = "将包含 __init__.py 的插件 .zip 包拖拽到此处进行热安装"; });
@@ -174,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// === 7. 实时日志渲染系统 (WebSocket 长连接驱动) ===
+// === 7. 实时日志渲染系统 ===
 let autoScroll = true;
 
 function toggleAutoScroll() {
@@ -184,7 +274,6 @@ function toggleAutoScroll() {
     else { btn.innerText = "自动滚动: 暂停"; btn.className = "toggle-btn btn-enable"; }
 }
 
-// 将以前的 loadLogs() 替换为了 websocket 重连机制
 window.loadLogs = function() {
     if (ws) ws.close();
     initLogWebSocket();
@@ -192,21 +281,21 @@ window.loadLogs = function() {
 
 function initLogWebSocket() {
     const consoleBox = document.getElementById('log-console');
+    if(!consoleBox) return;
     consoleBox.innerHTML = '<span style="color:#ebcb8b;">[SYSTEM] 正在建立 WebSocket 神经管道...</span>';
-    
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/api/logs/ws`;
     
     ws = new WebSocket(wsUrl);
-    
-    // 顺手把页面上的按钮名字改掉，证明我们用的是新代码！
     const refreshBtn = document.querySelector('button[onclick="loadLogs()"]');
     if(refreshBtn) refreshBtn.innerText = "重连管道";
     
     ws.onmessage = function(event) {
         const data = JSON.parse(event.data);
         if (data.status === 'success') {
-            document.getElementById('log-file-name').innerText = "读取文件: " + data.file;
+            const nameLabel = document.getElementById('log-file-name');
+            if(nameLabel) nameLabel.innerText = "读取文件: " + data.file;
+            
             let html = data.logs.replace(/</g, "&lt;").replace(/>/g, "&gt;");
             html = html.replace(/SUCCESS/g, '<span style="color: #a3be8c; font-weight: bold;">SUCCESS</span>');
             html = html.replace(/INFO/g, '<span style="color: #81a1c1; font-weight: bold;">INFO</span>');
@@ -218,9 +307,9 @@ function initLogWebSocket() {
             if (autoScroll) consoleBox.scrollTop = consoleBox.scrollHeight;
         }
     };
-    
     ws.onclose = function() {
-        if (document.getElementById('page-logs').classList.contains('active')) {
+        const pageLogs = document.getElementById('page-logs');
+        if (pageLogs && pageLogs.classList.contains('active')) {
             consoleBox.innerHTML += '\n<span style="color:#bf616a;">[SYSTEM] 管道已断开，正在尝试重连...</span>';
             setTimeout(initLogWebSocket, 3000);
         }

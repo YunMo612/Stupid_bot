@@ -5,6 +5,7 @@
 import os
 import re
 import zipfile
+import shutil
 import asyncio
 import nonebot
 from nonebot.plugin import PluginMetadata
@@ -165,6 +166,37 @@ async def toggle_plugin(req: ToggleRequest):
         return {"status": "error", "msg": "找不到该插件的物理文件夹！"}
     except Exception as e:
         return {"status": "error", "msg": f"操作失败: {e}"}
+
+# ==================== 🗑️ 插件删除 API ====================
+class DeleteRequest(BaseModel):
+    raw_name: str
+
+@app.post("/api/plugins/delete")
+async def delete_plugin(req: DeleteRequest):
+    plugins_dir = os.path.join(os.getcwd(), "src", "plugins")
+    target_path = os.path.join(plugins_dir, req.raw_name)
+    base_name = req.raw_name.lstrip("_")
+    
+    # 🛡️ 绝对防御：禁止面板自杀或删除核心组件
+    if base_name in ["web_ui", "common_core"]:
+        return {"status": "error", "msg": f"警告：[{base_name}] 是系统核心组件，禁止强制销毁！"}
+        
+    def trigger_reload():
+        trigger_file = os.path.join(plugins_dir, "__init__.py")
+        if not os.path.exists(trigger_file):
+            with open(trigger_file, "w", encoding="utf-8") as f:
+                f.write("# Auto-generated to trigger reload\n")
+        os.utime(trigger_file, None)
+
+    try:
+        if os.path.exists(target_path) and os.path.isdir(target_path):
+            shutil.rmtree(target_path)  # 💥 物理连根拔起
+            trigger_reload()            # 触发框架重启
+            return {"status": "success", "msg": f"已彻底销毁 {base_name}"}
+            
+        return {"status": "error", "msg": "找不到该插件的物理文件夹！"}
+    except Exception as e:
+        return {"status": "error", "msg": f"销毁失败: {e}"}
 
 # ==================== ☁️ ZIP 热安装 API ====================
 @app.post("/api/plugins/upload")
