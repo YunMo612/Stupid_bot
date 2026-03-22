@@ -22,3 +22,4 @@ bot_data.json
 
 # 忽略 WebUI 的自定义背景图
 src/plugins/web_ui/frontend/background/bg.jpg
+src/plugins/web_ui/frontend/background/bg.png
