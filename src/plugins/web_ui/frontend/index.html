@@ -8,27 +8,14 @@
     <link rel="icon" href="./icon/icon.png" type="image/png">
     <link rel="stylesheet" href="./style.css">
 </head>
-<div id="delete-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-icon">⚠️</div>
-            <h3 class="modal-title">严 重 警 告</h3>
-            <p class="modal-text">您即将物理删除模块：<br><strong id="delete-plugin-name"></strong></p>
-            <p class="modal-subtext">此操作不可逆，所有代码文件将从硬盘上永久抹除！</p>
-            <div class="modal-actions">
-                <button class="toggle-btn btn-outline" onclick="closeDeleteModal()">取消操作</button>
-                <button class="delete-btn" onclick="executeDelete()">🗑️ 确认销毁</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="./app.js"></script>
-</body>
 <body class="dark-theme">
 
-    <div class="sidebar">
+    <div class="glass-overlay"></div>
+
+    <div class="sidebar glass-panel">
         <div class="sidebar-header">
-            <h2>Stupid_UI</h2>
-            <p style="font-size: 0.8rem; color: #88c0d0; margin-top: 5px; font-weight: bold;">Core v2.0</p>
+            <h2 class="neon-text">Stupid_UI</h2>
+            <p style="font-size: 0.8rem; color: rgba(var(--monet-rgb), 0.8); margin-top: 5px; font-weight: bold; text-shadow: 0 0 5px rgba(var(--monet-rgb), 0.5);">Core v3.0 Glass</p>
         </div>
         
         <ul class="menu">
@@ -39,80 +26,93 @@
         </ul>
     </div>
 
-    <button id="theme-btn" class="theme-float-btn" onclick="toggleTheme(event)" title="切换主题">☀️</button>
+    <button id="theme-btn" class="theme-float-btn glass-btn" onclick="toggleTheme(event)" title="切换主题">☀️</button>
 
     <div class="main-content">
         
         <div class="topbar">
-            <h2 id="topbar-title">📊 基础信息</h2>
-            </div>
+            <h2 id="topbar-title" class="neon-text">📊 基础信息</h2>
+        </div>
 
         <div id="page-dashboard" class="page-container active">
-            <div class="card">
+            <div class="card glass-panel">
                 <h3>系统诊断与连通性测试</h3>
                 <p class="text-muted">点击下方按钮探测框架状态或底层大模型连通性。</p>
                 
                 <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-                    <button class="toggle-btn btn-enable" onclick="checkSystem()">探测中枢系统</button>
-                    <button class="toggle-btn btn-special" onclick="checkAI()">PING 大模型节点</button>
+                    <button class="toggle-btn glass-btn" onclick="checkSystem()">探测中枢系统</button>
+                    <button class="toggle-btn glass-btn special-glow" onclick="checkAI()">PING 大模型节点</button>
                 </div>
                 
-                <div id="status-box" class="console-box">等待指令输入...</div>
+                <div id="status-box" class="console-box glass-panel-inner">等待指令输入...</div>
             </div>
         </div>
 
         <div id="page-network" class="page-container">
-            <div class="card">
+            <div class="card glass-panel">
                 <h3>大模型 API 路由配置</h3>
                 <p class="text-muted">修改后将自动保存至 .env 文件，部分设置可能需要重启底层框架后生效。</p>
                 
                 <div class="input-group">
                     <label>LLAMA_SERVER_URL</label>
-                    <input type="text" id="input-llama" placeholder="例如: http://127.0.0.1:11434/v1/chat/completions">
+                    <input type="text" id="input-llama" class="glass-input" placeholder="例如: http://127.0.0.1:11434/v1/chat/completions">
                 </div>
                 
                 <div class="input-group">
                     <label>ROUTER_URL (路由转发节点)</label>
-                    <input type="text" id="input-router" placeholder="备用或转发节点地址">
+                    <input type="text" id="input-router" class="glass-input" placeholder="备用或转发节点地址">
                 </div>
                 
                 <div style="display: flex; align-items: center;">
-                    <button id="btn-save-net" class="toggle-btn btn-enable" onclick="saveNetworkConfig()">💾 保存配置到 .env</button>
-                    <span id="save-msg" style="margin-left: 15px; font-weight: bold;"></span>
+                    <button id="btn-save-net" class="toggle-btn glass-btn" onclick="saveNetworkConfig()">💾 保存配置到 .env</button>
+                    <span id="save-msg" style="margin-left: 15px; font-weight: bold; text-shadow: 0 0 5px rgba(var(--monet-rgb), 0.5);"></span>
                 </div>
             </div>
         </div>
 
         <div id="page-plugins" class="page-container">
-            <div class="card">
+            <div class="card glass-panel">
                 <h3>⚡ 热安装模块 (Drag & Drop)</h3>
-                <div id="drop-zone" class="drop-zone">
+                <div id="drop-zone" class="drop-zone glass-panel-inner">
                     <span id="drop-msg">将包含 __init__.py 的插件 .zip 包拖拽到此处进行热安装</span>
                 </div>
                 <input type="file" id="file-input" accept=".zip" style="display: none;">
             </div>
 
-            <div class="card" style="margin-top: 20px;">
+            <div class="card glass-panel" style="margin-top: 20px;">
                 <h3>🔌 已扫描的模块节点</h3>
                 <div id="plugin-list" class="plugin-list-container">
-                    <div style="color:#ebcb8b; text-align:center; padding: 20px;">⏳ 正在读取底层文件树...</div>
+                    <div style="color:rgba(var(--monet-rgb), 1); text-align:center; padding: 20px; text-shadow: 0 0 10px rgba(var(--monet-rgb), 0.8);">⏳ 正在读取底层文件树...</div>
                 </div>
             </div>
         </div>
 
         <div id="page-logs" class="page-container">
-            <div class="card log-card">
+            <div class="card log-card glass-panel">
                 <div class="log-header">
                     <span id="log-file-name" class="text-muted" style="font-family: 'Consolas', monospace;">等待读取...</span>
                     <div>
-                        <button class="toggle-btn btn-outline" onclick="loadLogs()">重连管道</button>
-                        <button id="auto-scroll-btn" class="toggle-btn btn-disable" style="margin-left: 10px;" onclick="toggleAutoScroll()">自动滚动: 开启</button>
+                        <button class="toggle-btn glass-btn" onclick="loadLogs()">重连管道</button>
+                        <button id="auto-scroll-btn" class="toggle-btn glass-btn" style="margin-left: 10px;" onclick="toggleAutoScroll()">自动滚动: 开启</button>
                     </div>
                 </div>
-                <div id="log-console" class="terminal-box"></div>
+                <div id="log-console" class="terminal-box glass-panel-inner"></div>
             </div>
         </div>
 
+    </div>
+
+    <div id="delete-modal" class="modal-overlay">
+        <div class="modal-box glass-panel">
+            <div class="modal-icon" style="text-shadow: 0 0 20px #bf616a;">⚠️</div>
+            <h3 class="modal-title" style="text-shadow: 0 0 10px rgba(191,97,106,0.5);">严 重 警 告</h3>
+            <p class="modal-text">您即将物理删除模块：<br><strong id="delete-plugin-name"></strong></p>
+            <p class="modal-subtext">此操作不可逆，所有代码文件将从硬盘上永久抹除！</p>
+            <div class="modal-actions">
+                <button class="toggle-btn glass-btn" onclick="closeDeleteModal()">取消操作</button>
+                <button class="delete-btn glass-btn-danger" onclick="executeDelete()">🗑️ 确认销毁</button>
+            </div>
+        </div>
     </div>
 
     <script src="./app.js"></script>

@@ -23,9 +23,6 @@ app = nonebot.get_asgi()
 # 原来的自动扫描
 nonebot.load_plugins("src/plugins")
 
-# 🌟 强制召唤：逼迫框架加载大脑，如果敢报错就给我大声报出来！
-# nonebot.load_plugin("src.plugins.prts_ai")
-
 # (可选) 如果你以后安装了通过 pip 安装的第三方插件，可以使用这行：
 # nonebot.load_from_toml("pyproject.toml")
 
