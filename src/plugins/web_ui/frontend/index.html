@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>啥子UI</title>
     
     <link rel="icon" href="./icon/icon.png" type="image/png">
@@ -12,10 +12,12 @@
 
     <div class="glass-overlay"></div>
 
-    <div class="sidebar glass-panel">
+    <div id="mobile-overlay" class="mobile-overlay" onclick="toggleMobileMenu()"></div>
+
+    <div id="sidebar" class="sidebar glass-panel" data-interactive="true">
         <div class="sidebar-header">
             <h2 class="neon-text">Stupid_UI</h2>
-            <p style="font-size: 0.8rem; color: rgba(var(--monet-rgb), 0.8); margin-top: 5px; font-weight: bold; text-shadow: 0 0 5px rgba(var(--monet-rgb), 0.5);">Core v3.0 Glass</p>
+            <p style="font-size: 0.8rem; color: rgba(var(--monet-rgb), 0.8); margin-top: 5px; font-weight: bold;">Core v7.0 Responsive</p>
         </div>
         
         <ul class="menu">
@@ -31,27 +33,42 @@
     <div class="main-content">
         
         <div class="topbar">
-            <h2 id="topbar-title" class="neon-text">📊 基础信息</h2>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button id="mobile-menu-btn" class="glass-btn" onclick="toggleMobileMenu()">☰</button>
+                <h2 id="topbar-title" class="neon-text">📊 基础信息</h2>
+            </div>
         </div>
 
         <div id="page-dashboard" class="page-container active">
-            <div class="card glass-panel">
+            <div class="card glass-panel" data-interactive="true">
                 <h3>系统诊断与连通性测试</h3>
                 <p class="text-muted">点击下方按钮探测框架状态或底层大模型连通性。</p>
                 
-                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <div class="btn-group-responsive" style="margin-bottom: 20px;">
                     <button class="toggle-btn glass-btn" onclick="checkSystem()">探测中枢系统</button>
                     <button class="toggle-btn glass-btn special-glow" onclick="checkAI()">PING 大模型节点</button>
                 </div>
                 
                 <div id="status-box" class="console-box glass-panel-inner">等待指令输入...</div>
             </div>
+
+            <div class="card glass-panel" data-interactive="true" style="margin-top: 20px;">
+                <h3>🎨 外观与个性化</h3>
+                <p class="text-muted">上传自定义背景壁纸（自动提取莫奈光影基准色）。</p>
+                
+                <div class="btn-group-responsive align-center">
+                    <button class="toggle-btn glass-btn" onclick="document.getElementById('bg-upload').click()">上传自定义壁纸</button>
+                    <button class="toggle-btn glass-btn btn-outline" onclick="resetBackground()">恢复默认深空</button>
+                    <span id="bg-upload-msg" style="font-weight: bold; font-size: 0.9rem;"></span>
+                </div>
+                <input type="file" id="bg-upload" accept="image/*" style="display: none;">
+            </div>
         </div>
 
         <div id="page-network" class="page-container">
-            <div class="card glass-panel">
+            <div class="card glass-panel" data-interactive="true">
                 <h3>大模型 API 路由配置</h3>
-                <p class="text-muted">修改后将自动保存至 .env 文件，部分设置可能需要重启底层框架后生效。</p>
+                <p class="text-muted">修改后将自动保存至 .env 文件，部分设置可能需要重启底层生效。</p>
                 
                 <div class="input-group">
                     <label>LLAMA_SERVER_URL</label>
@@ -63,37 +80,37 @@
                     <input type="text" id="input-router" class="glass-input" placeholder="备用或转发节点地址">
                 </div>
                 
-                <div style="display: flex; align-items: center;">
+                <div class="btn-group-responsive align-center">
                     <button id="btn-save-net" class="toggle-btn glass-btn" onclick="saveNetworkConfig()">💾 保存配置到 .env</button>
-                    <span id="save-msg" style="margin-left: 15px; font-weight: bold; text-shadow: 0 0 5px rgba(var(--monet-rgb), 0.5);"></span>
+                    <span id="save-msg" style="font-weight: bold;"></span>
                 </div>
             </div>
         </div>
 
         <div id="page-plugins" class="page-container">
-            <div class="card glass-panel">
+            <div class="card glass-panel" data-interactive="true">
                 <h3>⚡ 热安装模块 (Drag & Drop)</h3>
                 <div id="drop-zone" class="drop-zone glass-panel-inner">
-                    <span id="drop-msg">将包含 __init__.py 的插件 .zip 包拖拽到此处进行热安装</span>
+                    <span id="drop-msg">点击或将 .zip 拖拽到此处进行热安装</span>
                 </div>
                 <input type="file" id="file-input" accept=".zip" style="display: none;">
             </div>
 
-            <div class="card glass-panel" style="margin-top: 20px;">
+            <div class="card glass-panel" data-interactive="true" style="margin-top: 20px;">
                 <h3>🔌 已扫描的模块节点</h3>
                 <div id="plugin-list" class="plugin-list-container">
-                    <div style="color:rgba(var(--monet-rgb), 1); text-align:center; padding: 20px; text-shadow: 0 0 10px rgba(var(--monet-rgb), 0.8);">⏳ 正在读取底层文件树...</div>
+                    <div style="color:rgba(var(--monet-rgb),1); text-align:center; padding: 20px;">⏳ 正在读取底层文件树...</div>
                 </div>
             </div>
         </div>
 
         <div id="page-logs" class="page-container">
-            <div class="card log-card glass-panel">
+            <div class="card log-card glass-panel" data-interactive="true">
                 <div class="log-header">
-                    <span id="log-file-name" class="text-muted" style="font-family: 'Consolas', monospace;">等待读取...</span>
-                    <div>
+                    <span id="log-file-name" class="text-muted" style="font-family: 'Consolas', monospace; font-size: 0.85rem;">等待读取...</span>
+                    <div class="btn-group-responsive">
                         <button class="toggle-btn glass-btn" onclick="loadLogs()">重连管道</button>
-                        <button id="auto-scroll-btn" class="toggle-btn glass-btn" style="margin-left: 10px;" onclick="toggleAutoScroll()">自动滚动: 开启</button>
+                        <button id="auto-scroll-btn" class="toggle-btn glass-btn" onclick="toggleAutoScroll()">自动滚动: 开启</button>
                     </div>
                 </div>
                 <div id="log-console" class="terminal-box glass-panel-inner"></div>
