@@ -4,20 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>啥子UI</title>
-    
     <link rel="icon" href="./icon/icon.png" type="image/png">
     <link rel="stylesheet" href="./style.css">
 </head>
 <body class="dark-theme">
 
     <div class="glass-overlay"></div>
-
     <div id="mobile-overlay" class="mobile-overlay" onclick="toggleMobileMenu()"></div>
 
     <div id="sidebar" class="sidebar glass-panel" data-interactive="true">
         <div class="sidebar-header">
             <h2 class="neon-text">Stupid_UI</h2>
-            <p style="font-size: 0.8rem; color: rgba(var(--monet-rgb), 0.8); margin-top: 5px; font-weight: bold;">Core v7.0 Responsive</p>
+            <p style="font-size: 0.8rem; color: rgba(var(--monet-rgb), 0.8); margin-top: 5px; font-weight: bold;">Core v8.0 Meta</p>
         </div>
         
         <ul class="menu">
@@ -25,13 +23,13 @@
             <li class="menu-item" onclick="switchTab('page-network', this, '🌐 网络配置')">🌐 网络配置</li>
             <li class="menu-item" onclick="switchTab('page-plugins', this, '📦 插件管理')">📦 插件管理</li>
             <li class="menu-item" onclick="switchTab('page-logs', this, '📝 神经日志')">📝 神经日志</li>
+            <li class="menu-item" onclick="switchTab('page-settings', this, '⚙️ 系统设置')">⚙️ 系统设置</li>
         </ul>
     </div>
 
     <button id="theme-btn" class="theme-float-btn glass-btn" onclick="toggleTheme(event)" title="切换主题">☀️</button>
 
     <div class="main-content">
-        
         <div class="topbar">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <button id="mobile-menu-btn" class="glass-btn" onclick="toggleMobileMenu()">☰</button>
@@ -43,25 +41,11 @@
             <div class="card glass-panel" data-interactive="true">
                 <h3>系统诊断与连通性测试</h3>
                 <p class="text-muted">点击下方按钮探测框架状态或底层大模型连通性。</p>
-                
                 <div class="btn-group-responsive" style="margin-bottom: 20px;">
                     <button class="toggle-btn glass-btn" onclick="checkSystem()">探测中枢系统</button>
                     <button class="toggle-btn glass-btn special-glow" onclick="checkAI()">PING 大模型节点</button>
                 </div>
-                
                 <div id="status-box" class="console-box glass-panel-inner">等待指令输入...</div>
-            </div>
-
-            <div class="card glass-panel" data-interactive="true" style="margin-top: 20px;">
-                <h3>🎨 外观与个性化</h3>
-                <p class="text-muted">上传自定义背景壁纸（自动提取莫奈光影基准色）。</p>
-                
-                <div class="btn-group-responsive align-center">
-                    <button class="toggle-btn glass-btn" onclick="document.getElementById('bg-upload').click()">上传自定义壁纸</button>
-                    <button class="toggle-btn glass-btn btn-outline" onclick="resetBackground()">恢复默认深空</button>
-                    <span id="bg-upload-msg" style="font-weight: bold; font-size: 0.9rem;"></span>
-                </div>
-                <input type="file" id="bg-upload" accept="image/*" style="display: none;">
             </div>
         </div>
 
@@ -69,17 +53,14 @@
             <div class="card glass-panel" data-interactive="true">
                 <h3>大模型 API 路由配置</h3>
                 <p class="text-muted">修改后将自动保存至 .env 文件，部分设置可能需要重启底层生效。</p>
-                
                 <div class="input-group">
                     <label>LLAMA_SERVER_URL</label>
-                    <input type="text" id="input-llama" class="glass-input" placeholder="例如: http://127.0.0.1:11434/v1/chat/completions">
+                    <input type="text" id="input-llama" class="glass-input">
                 </div>
-                
                 <div class="input-group">
                     <label>ROUTER_URL (路由转发节点)</label>
-                    <input type="text" id="input-router" class="glass-input" placeholder="备用或转发节点地址">
+                    <input type="text" id="input-router" class="glass-input">
                 </div>
-                
                 <div class="btn-group-responsive align-center">
                     <button id="btn-save-net" class="toggle-btn glass-btn" onclick="saveNetworkConfig()">💾 保存配置到 .env</button>
                     <span id="save-msg" style="font-weight: bold;"></span>
@@ -89,17 +70,16 @@
 
         <div id="page-plugins" class="page-container">
             <div class="card glass-panel" data-interactive="true">
-                <h3>⚡ 热安装模块 (Drag & Drop)</h3>
+                <h3>⚡ 热安装模块</h3>
                 <div id="drop-zone" class="drop-zone glass-panel-inner">
                     <span id="drop-msg">点击或将 .zip 拖拽到此处进行热安装</span>
                 </div>
                 <input type="file" id="file-input" accept=".zip" style="display: none;">
             </div>
-
             <div class="card glass-panel" data-interactive="true" style="margin-top: 20px;">
-                <h3><span style="margin-right: 8px;">🔌</span>已扫描的模块节点</h3>
+                <h3>🔌 元数据节点拓扑</h3>
                 <div id="plugin-list" class="plugin-list-container">
-                    <div style="color:rgba(var(--monet-rgb),1); text-align:center; padding: 20px;">⏳ 正在读取底层文件树...</div>
+                    <div style="color:rgba(var(--monet-rgb),1); text-align:center; padding: 20px;">⏳ 同步配置清单中...</div>
                 </div>
             </div>
         </div>
@@ -114,6 +94,47 @@
                     </div>
                 </div>
                 <div id="log-console" class="terminal-box glass-panel-inner"></div>
+            </div>
+        </div>
+
+        <div id="page-settings" class="page-container">
+            <div class="card glass-panel" data-interactive="true">
+                <h3>🎨 视觉与外观</h3>
+                <p class="text-muted">定制你的控制台环境光与材质，变更将自动保存。</p>
+                
+                <div class="settings-row">
+                    <span>自定义背景壁纸 (自动莫奈取色)</span>
+                    <div class="btn-group-responsive align-center">
+                        <button class="toggle-btn glass-btn" onclick="document.getElementById('bg-upload').click()">上传本地图片</button>
+                        <button class="toggle-btn glass-btn btn-outline" onclick="resetBackground()">恢复默认</button>
+                        <span id="bg-upload-msg" style="font-weight: bold; font-size: 0.9rem;"></span>
+                    </div>
+                    <input type="file" id="bg-upload" accept="image/*" style="display: none;">
+                </div>
+                
+                <div class="settings-divider"></div>
+                
+                <div class="settings-row">
+                    <div>
+                        <strong style="display:block; margin-bottom:5px;">全局动态光影与动画</strong>
+                        <span class="text-muted" style="font-size:0.8rem; margin:0;">禁用后可大幅降低旧设备的 GPU 占用。</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="setting-anim" onchange="toggleSetting('animations', this.checked)" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                
+                <div class="settings-row">
+                    <div>
+                        <strong style="display:block; margin-bottom:5px;">深度毛玻璃材质 (Glassmorphism)</strong>
+                        <span class="text-muted" style="font-size:0.8rem; margin:0;">禁用后将使用高对比度实体色块替换半透明面板。</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="setting-glass" onchange="toggleSetting('glass', this.checked)" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
             </div>
         </div>
 

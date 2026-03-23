@@ -1,0 +1,30 @@
+{
+  "web_ui": {
+    "name_zh": "可视化控制面板",
+    "description": "提供基于 Web 的现代化机器人后台管理与监控界面。",
+    "version": "v7.0",
+    "can_disable": false,
+    "can_delete": false
+  },
+  "common_core": {
+    "name_zh": "系统核心组件",
+    "description": "提供底层依赖、定时任务调度以及公用函数库。",
+    "version": "v1.2.0",
+    "can_disable": false,
+    "can_delete": false
+  },
+  "group_admin": {
+    "name_zh": "群管与风控",
+    "description": "自动化群管，包含入群欢迎、违禁词撤回、自动踢人与黑名单管理。",
+    "version": "v2.1",
+    "can_disable": true,
+    "can_delete": true
+  },
+  "prts_ai": {
+    "name_zh": "PRTS 大模型引擎",
+    "description": "接入本地 LLM，赋予机器人上下文理解与自然语言对话能力。",
+    "version": "v3.0",
+    "can_disable": true,
+    "can_delete": true
+  }
+}

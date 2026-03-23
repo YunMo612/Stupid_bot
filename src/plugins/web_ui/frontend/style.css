@@ -1,242 +1,125 @@
-/* ==========================================
-   🎨 全局变量与莫奈取色核心 (Monet Engine)
-   ========================================== */
 :root {
-    /* 莫奈提取的动态基准色，默认星空蓝 */
     --monet-rgb: 137, 180, 250; 
+    --light-x: -1000px; --light-y: -1000px;
+    --solid-bg: #f8f9fa; /* 禁用玻璃后的浅色实体底 */
     
-    /* 🌟 环境激光坐标中心点 (由 JS 实时注入) */
-    --light-x: -1000px;
-    --light-y: -1000px;
-    
-    /* ☀️ 浅色模式玻璃态参数 (极高对比度，去除杂色) */
-    --glass-bg: rgba(255, 255, 255, 0.6); 
+    --glass-bg: rgba(255, 255, 255, 0.88); 
     --glass-border: rgba(0, 0, 0, 0.15); 
     --glass-inner: rgba(255, 255, 255, 0.7);
     --text-main: #1c1e26; 
     --text-muted: #4a5568;
     --overlay-color: rgba(255, 255, 255, 0.5); 
     
-    /* ☀️ 浅色模式高对比日志颜色 */
-    --log-success: #1b7a43; 
-    --log-info: #2d3748; 
-    --log-warn: #c05621; 
-    --log-error: #c53030;   
+    --log-success: #1b7a43; --log-info: #2d3748; --log-warn: #c05621; --log-error: #c53030;   
 }
 
 body.dark-theme {
-    /* 🌙 暗黑模式极光玻璃态参数 (保留高光与通透感) */
+    --solid-bg: #1e1e2e; /* 禁用玻璃后的深色实体底 */
     --glass-bg: rgba(30, 30, 46, 0.6);
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-inner: rgba(0, 0, 0, 0.3);
-    --text-main: #cdd6f4; 
-    --text-muted: #a6adc8;
+    --text-main: #cdd6f4; --text-muted: #a6adc8;
     --overlay-color: rgba(10, 10, 15, 0.6);
-
-    /* 🌙 暗黑模式霓虹日志颜色 */
-    --log-success: #a3be8c; 
-    --log-info: rgba(var(--monet-rgb), 1); 
-    --log-warn: #ebcb8b; 
-    --log-error: #bf616a;
+    --log-success: #a3be8c; --log-info: rgba(var(--monet-rgb), 1); --log-warn: #ebcb8b; --log-error: #bf616a;
 }
 
-/* ==========================================
-   🔄 基础重置与底层设定
-   ========================================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, sans-serif; color: var(--text-main); display: flex; height: 100vh; overflow: hidden; background-size: cover; background-position: center; background-attachment: fixed; transition: color 0.3s ease; }
+.glass-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--overlay-color); z-index: -1; transition: background 0.5s ease; }
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: var(--text-main); 
-    display: flex; 
-    height: 100vh; 
-    overflow: hidden;
-    background-size: cover; 
-    background-position: center; 
-    background-attachment: fixed; 
-    transition: color 0.3s ease;
-}
+/* 🌟 设置：禁用毛玻璃 */
+body.no-glass .glass-overlay { background: var(--solid-bg); opacity: 0.98; }
+body.no-glass .glass-panel, body.no-glass .glass-panel-inner, body.no-glass .glass-btn, body.no-glass .modal-overlay { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body.no-glass .glass-panel { background: var(--solid-bg); border-color: rgba(128,128,128,0.2); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+body.no-glass .glass-panel-inner { background: rgba(128,128,128,0.05); }
 
-/* 全屏毛玻璃滤镜底板，保护可读性 */
-.glass-overlay { 
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
-    background: var(--overlay-color); 
-    z-index: -1; 
-    transition: background 0.5s ease; 
-}
+/* 🌟 设置：禁用动画与环境光 */
+body.no-anim * { transition: none !important; animation: none !important; }
+body.no-anim [data-interactive="true"]::after { display: none !important; }
 
-/* ==========================================
-   🧊 玻璃态核心容器与 🌟全局环境激光
-   ========================================== */
-.glass-panel { 
-    background: var(--glass-bg); 
-    backdrop-filter: blur(20px); 
-    -webkit-backdrop-filter: blur(20px); 
-    border: 1px solid var(--glass-border); 
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15); 
-    position: relative; 
-    overflow: hidden; 
-}
+/* 核心容器 */
+.glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15); position: relative; overflow: hidden; }
+body.dark-theme [data-interactive="true"]::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; -webkit-mask-image: radial-gradient(circle 200px at var(--light-x) var(--light-y), black calc(200px - 15px), transparent 200px); mask-image: radial-gradient(circle 200px at var(--light-x) var(--light-y), black calc(200px - 15px), transparent 200px); border: 1.5px solid rgba(var(--monet-rgb), 1); border-radius: inherit; opacity: 1; transition: border-color 0.4s ease; animation: borderNeonPulse 4s infinite alternate; box-shadow: inset 0 0 12px rgba(var(--monet-rgb), 0.6); z-index: 5; }
+@keyframes borderNeonPulse { from { filter: brightness(1) blur(0px); box-shadow: inset 0 0 5px rgba(var(--monet-rgb), 0.3); } to { filter: brightness(1.2) blur(0.5px); box-shadow: inset 0 0 15px rgba(var(--monet-rgb), 0.7); } }
+.glass-panel-inner { background: var(--glass-inner); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 8px; box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05); }
 
-/* 🌟 核心魔法：1.5px 锐利环境激光线 (仅在暗黑模式开启，浅色模式保持清爽) */
-body.dark-theme [data-interactive="true"]::after {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; 
-    /* 遮罩边缘自带 15px 羽化扩散 */
-    -webkit-mask-image: radial-gradient(circle 200px at var(--light-x) var(--light-y), black calc(200px - 15px), transparent 200px);
-    mask-image: radial-gradient(circle 200px at var(--light-x) var(--light-y), black calc(200px - 15px), transparent 200px);
-    /* 1.5px 极细激光边框 */
-    border: 1.5px solid rgba(var(--monet-rgb), 1); 
-    border-radius: inherit; opacity: 1; 
-    transition: border-color 0.4s ease; 
-    animation: borderNeonPulse 4s infinite alternate; 
-    box-shadow: inset 0 0 12px rgba(var(--monet-rgb), 0.6); 
-    z-index: 5;
-}
-
-@keyframes borderNeonPulse { 
-    from { filter: brightness(1) blur(0px); box-shadow: inset 0 0 5px rgba(var(--monet-rgb), 0.3); } 
-    to { filter: brightness(1.2) blur(0.5px); box-shadow: inset 0 0 15px rgba(var(--monet-rgb), 0.7); } 
-}
-
-.glass-panel-inner { 
-    background: var(--glass-inner); 
-    backdrop-filter: blur(10px); 
-    border: 1px solid var(--glass-border); 
-    border-radius: 8px; 
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05); 
-}
-
-/* 霓虹发光文字 (仅暗色模式明显) */
 body.dark-theme .neon-text { text-shadow: 0 0 10px rgba(var(--monet-rgb), 0.5), 0 0 20px rgba(var(--monet-rgb), 0.3); }
 .neon-text { font-weight: 800; }
 
-/* ==========================================
-   🎛️ 玻璃态按钮体系
-   ========================================== */
-.glass-btn { 
-    background: rgba(var(--monet-rgb), 0.15); backdrop-filter: blur(5px); 
-    border: 1px solid var(--glass-border); color: var(--text-main); 
-    padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; 
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 10; 
-}
-.glass-btn:hover { 
-    background: rgba(var(--monet-rgb), 0.6); color: #fff; 
-    box-shadow: 0 0 15px rgba(var(--monet-rgb), 0.5); transform: translateY(-2px); 
-}
+/* 按钮体系 */
+.glass-btn { background: rgba(var(--monet-rgb), 0.15); backdrop-filter: blur(5px); border: 1px solid var(--glass-border); color: var(--text-main); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 10; }
+.glass-btn:hover { background: rgba(var(--monet-rgb), 0.6); color: #fff; box-shadow: 0 0 15px rgba(var(--monet-rgb), 0.5); transform: translateY(-2px); }
 .glass-btn:active { transform: translateY(1px); }
-
-/* 危险销毁按钮 (猩红) */
-.glass-btn-danger { 
-    background: rgba(191, 97, 106, 0.15); border: 1px solid rgba(191, 97, 106, 0.5); color: #bf616a; 
-    padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.3s ease; margin-left: 0 !important; 
-}
+.glass-btn-danger { background: rgba(191, 97, 106, 0.15); border: 1px solid rgba(191, 97, 106, 0.5); color: #bf616a; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.3s ease; margin-left: 0 !important; }
 .glass-btn-danger:hover { background: #bf616a; color: #fff; box-shadow: 0 0 20px rgba(191, 97, 106, 0.8); transform: translateY(-2px); }
-
-/* 🔒 核心锁定死按钮 */
-.glass-btn-disabled { 
-    background: rgba(128, 128, 128, 0.1) !important; border: 1px solid var(--glass-border) !important; 
-    color: var(--text-muted) !important; cursor: not-allowed !important; box-shadow: none !important; 
-    transform: none !important; margin-left: 0px !important; z-index: 10; 
-}
-
-/* 🌟 主题浮动悬浮按钮 */
-.theme-float-btn { 
-    position: fixed; bottom: 45px; left: 45px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; 
-    display: flex; align-items: center; justify-content: center; z-index: 2000; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); 
-}
+.glass-btn-disabled { background: rgba(128, 128, 128, 0.1) !important; border: 1px solid var(--glass-border) !important; color: var(--text-muted) !important; cursor: not-allowed !important; box-shadow: none !important; transform: none !important; margin-left: 0px !important; z-index: 10; }
+.theme-float-btn { position: fixed; bottom: 45px; left: 45px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 2000; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); }
 body.dark-theme .theme-float-btn { animation: floatGlow 3s infinite alternate; }
-@keyframes floatGlow { 
-    from { box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 0 10px rgba(var(--monet-rgb), 0.3); } 
-    to { box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 35px rgba(var(--monet-rgb), 0.8); } 
-}
+@keyframes floatGlow { from { box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 0 10px rgba(var(--monet-rgb), 0.3); } to { box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 35px rgba(var(--monet-rgb), 0.8); } }
 
-/* ==========================================
-   🍎 苹果式悬浮岛布局 (Floating Island)
-   ========================================== */
-.sidebar { 
-    width: 260px; display: flex; flex-direction: column; z-index: 1000; 
-    margin: 20px 10px 20px 20px; height: calc(100vh - 40px); 
-    border-radius: 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); 
-    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); 
-}
+/* 布局 */
+.sidebar { width: 260px; display: flex; flex-direction: column; z-index: 1000; margin: 20px 10px 20px 20px; height: calc(100vh - 40px); border-radius: 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
 .sidebar-header { padding: 25px 20px 15px 20px; border-bottom: 1px solid var(--glass-border); margin-bottom: 10px; }
-
 .menu { list-style: none; padding: 10px; }
 .menu-item { padding: 12px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; color: var(--text-muted); font-weight: 500; transition: all 0.3s ease; }
 .menu-item:hover { background: rgba(var(--monet-rgb), 0.2); color: var(--text-main); }
 .menu-item.active { background: rgba(var(--monet-rgb), 0.8); color: #ffffff; box-shadow: 0 0 15px rgba(var(--monet-rgb), 0.4); border: 1px solid rgba(255,255,255,0.3); }
-
 .main-content { flex: 1; padding: 20px 30px 20px 15px; overflow-y: auto; z-index: 1; height: 100vh; }
 .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-
-/* 移动端汉堡菜单和遮罩 (默认隐藏) */
 #mobile-menu-btn { display: none; padding: 6px 12px; font-size: 1.2rem; }
 .mobile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); z-index: 900; opacity: 0; transition: opacity 0.4s ease; }
 .mobile-overlay.show { display: block; opacity: 1; }
 
-/* ==========================================
-   📦 通用卡片与表单
-   ========================================== */
 .card { border-radius: 12px; padding: 25px; margin-bottom: 20px; transition: all 0.3s ease; }
-
-/* 🌟 核心修复：给卡片内的大标题加上呼吸间距 */
 .card h3 { margin-bottom: 16px; font-size: 1.25rem; }
-
-.text-muted { color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem; }
-
-/* 响应式弹性按钮组 */
+.text-muted { color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5; }
 .btn-group-responsive { display: flex; gap: 15px; flex-wrap: wrap; }
 .align-center { align-items: center; }
-
 .input-group { margin-bottom: 20px; }
 .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main); }
 .glass-input { width: 100%; padding: 12px; background: rgba(var(--monet-rgb), 0.05); border: 1px solid var(--glass-border); color: var(--text-main); border-radius: 6px; font-size: 1rem; transition: all 0.3s ease; }
 .glass-input:focus { outline: none; background: rgba(var(--monet-rgb), 0.1); border-color: rgba(var(--monet-rgb), 0.8); box-shadow: 0 0 10px rgba(var(--monet-rgb), 0.2); }
 
-/* ==========================================
-   🔌 页面切换与插件列表
-   ========================================== */
+/* 设置页组件 */
+.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; flex-wrap: wrap; gap: 15px; }
+.settings-divider { border-bottom: 1px solid var(--glass-border); margin: 5px 0; }
+.switch { position: relative; display: inline-block; width: 50px; height: 26px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--glass-border); transition: .4s; border-radius: 34px; border: 1px solid var(--glass-border); }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: var(--text-main); transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: rgba(var(--monet-rgb), 0.8); border-color: rgba(255,255,255,0.5); }
+input:checked + .slider:before { transform: translateX(24px); background-color: #fff; box-shadow: 0 0 10px #fff; }
+
+/* 页面切换与升级版插件卡片 */
 .page-container { display: none; animation: fadeIn 0.4s ease forwards; }
 .page-container.active { display: block; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-.plugin-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; transition: transform 0.3s ease; }
-.plugin-item:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 5px 15px rgba(var(--monet-rgb), 0.1); }
-.plugin-info { display: flex; align-items: center; }
-
-/* 🌟 修复按钮间距 */
-.plugin-actions { display: flex; align-items: center; gap: 15px; }
-
-.status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 15px; flex-shrink: 0; }
+/* 🌟 调整插件项以容纳更多元数据 */
+.plugin-item { display: flex; justify-content: space-between; align-items: center; padding: 20px; margin-bottom: 15px; transition: transform 0.3s ease; }
+.plugin-item:hover { transform: translateY(-3px); box-shadow: 0 5px 20px rgba(var(--monet-rgb), 0.15); }
+.plugin-info-main { display: flex; align-items: flex-start; }
+.status-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 15px; margin-top: 5px; flex-shrink: 0; }
 .status-active { background-color: var(--log-success); box-shadow: 0 0 10px var(--log-success); }
 .status-disabled { background-color: var(--log-error); box-shadow: 0 0 10px var(--log-error); }
+.plugin-details h4 { margin: 0 0 5px 0; font-size: 1.15rem; color: var(--text-main); text-shadow: 0 0 5px rgba(255,255,255,0.1); }
+.plugin-details .meta-tags { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.meta-tag { font-family: 'Consolas', monospace; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.1); }
+.plugin-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; margin: 0; max-width: 500px; }
+.plugin-actions { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: flex-end; }
 
 .drop-zone { border: 2px dashed rgba(var(--monet-rgb), 0.6); padding: 40px 20px; text-align: center; cursor: pointer; margin-top: 15px; transition: all 0.3s ease; }
 .drop-zone:hover, .drop-zone.dragover { background: rgba(var(--monet-rgb), 0.1); border-color: rgba(var(--monet-rgb), 1); }
 
-/* ==========================================
-   💻 终端控制台与日志专属类
-   ========================================== */
 .console-box, .terminal-box { color: var(--text-main); font-family: 'Consolas', monospace; padding: 15px; white-space: pre-wrap; word-break: break-all; font-size: 0.95rem; line-height: 1.6; }
 .console-box { min-height: 100px; margin-top: 15px; }
 .log-card { height: calc(100vh - 120px); display: flex; flex-direction: column; }
 .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
 .terminal-box { flex: 1; overflow-y: auto; }
 
-.log-success { color: var(--log-success); font-weight: bold; } 
-.log-info { color: var(--log-info); font-weight: bold; } 
-.log-warn { color: var(--log-warn); font-weight: bold; } 
-.log-error { color: var(--log-error); font-weight: bold; }
+.log-success { color: var(--log-success); font-weight: bold; } .log-info { color: var(--log-info); font-weight: bold; } .log-warn { color: var(--log-warn); font-weight: bold; } .log-error { color: var(--log-error); font-weight: bold; }
+body.dark-theme .log-success { text-shadow: 0 0 8px rgba(var(--log-success), 0.4); } body.dark-theme .log-info { text-shadow: 0 0 8px rgba(var(--log-info), 0.4); } body.dark-theme .log-warn { text-shadow: 0 0 8px rgba(var(--log-warn), 0.4); } body.dark-theme .log-error { text-shadow: 0 0 8px rgba(var(--log-error), 0.4); }
 
-/* 仅在暗黑模式给日志文字加上霓虹光晕 */
-body.dark-theme .log-success { text-shadow: 0 0 8px rgba(var(--log-success), 0.4); } 
-body.dark-theme .log-info { text-shadow: 0 0 8px rgba(var(--log-info), 0.4); } 
-body.dark-theme .log-warn { text-shadow: 0 0 8px rgba(var(--log-warn), 0.4); } 
-body.dark-theme .log-error { text-shadow: 0 0 8px rgba(var(--log-error), 0.4); }
-
-/* ==========================================
-   ⚠️ 定制化二次确认弹窗 (16px 圆角)
-   ========================================== */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
 .modal-overlay.show { opacity: 1; pointer-events: auto; }
 .modal-box { padding: 30px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(191, 97, 106, 0.5); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.3), inset 0 0 20px rgba(191,97,106,0.1); transform: translateY(30px) scale(0.9); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -248,52 +131,23 @@ body.dark-theme .log-error { text-shadow: 0 0 8px rgba(var(--log-error), 0.4); }
 #delete-plugin-name { color: #bf616a; font-family: 'Consolas', monospace; font-size: 1.3rem; word-break: break-all; }
 .modal-subtext { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 25px; }
 
-/* ==========================================
-   🌟 30px 高级羽化主题过渡动画
-   ========================================== */
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-.theme-transitioning::view-transition-new(root) { 
-    -webkit-mask-image: radial-gradient(circle at var(--mask-x) var(--mask-y), black calc(var(--mask-radius) - 30px), transparent var(--mask-radius)); 
-    mask-image: radial-gradient(circle at var(--mask-x) var(--mask-y), black calc(var(--mask-radius) - 30px), transparent var(--mask-radius)); 
-    animation: none; 
-}
+.theme-transitioning::view-transition-new(root) { -webkit-mask-image: radial-gradient(circle at var(--mask-x) var(--mask-y), black calc(var(--mask-radius) - 30px), transparent var(--mask-radius)); mask-image: radial-gradient(circle at var(--mask-x) var(--mask-y), black calc(var(--mask-radius) - 30px), transparent var(--mask-radius)); animation: none; }
 .theme-transitioning::view-transition-old(root) { animation: none; z-index: -1; }
 
-/* ==========================================
-   📱 Pad 平板端适配 (小于 1024px)
-   ========================================== */
-@media screen and (max-width: 1024px) {
-    .sidebar { width: 220px; margin: 15px 5px 15px 15px; }
-    .main-content { padding: 15px 20px 15px 10px; }
-    .theme-float-btn { bottom: 30px; left: 30px; width: 45px; height: 45px; }
-}
-
-/* ==========================================
-   📱 Mobile 手机端适配 (小于 768px)
-   ========================================== */
+@media screen and (max-width: 1024px) { .sidebar { width: 220px; margin: 15px 5px 15px 15px; } .main-content { padding: 15px 20px 15px 10px; } .theme-float-btn { bottom: 30px; left: 30px; width: 45px; height: 45px; } }
 @media screen and (max-width: 768px) {
     #mobile-menu-btn { display: block; }
-    
-    /* 侧边栏变为抽屉菜单 */
-    .sidebar { 
-        position: fixed; top: 0; left: 0; height: 100vh; margin: 0; border-radius: 0; border-right: 1px solid rgba(255,255,255,0.2);
-        transform: translateX(-100%); width: 250px;
-    }
+    .sidebar { position: fixed; top: 0; left: 0; height: 100vh; margin: 0; border-radius: 0; border-right: 1px solid rgba(255,255,255,0.2); transform: translateX(-100%); width: 250px; }
     .sidebar.mobile-open { transform: translateX(0); }
-    
     .main-content { padding: 15px; height: auto; overflow-y: visible; }
     .card { padding: 18px; margin-bottom: 15px; }
-    
-    /* 移动端主题按钮位置调整 */
     .theme-float-btn { bottom: 20px; left: 20px; width: 45px; height: 45px; z-index: 2000; }
-    
-    /* 弹性布局折叠 */
     .btn-group-responsive { flex-direction: column; align-items: stretch; gap: 10px; }
     .btn-group-responsive.align-center { align-items: stretch; }
     
-    /* 插件列表在小屏上换行 */
-    .plugin-item { flex-direction: column; align-items: flex-start; gap: 15px; }
-    .plugin-actions { width: 100%; justify-content: flex-end; }
-    
+    /* 移动端插件卡片全折叠 */
+    .plugin-item { flex-direction: column; align-items: flex-start; padding: 15px; }
+    .plugin-actions { width: 100%; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--glass-border); }
     .log-card { height: 70vh; }
 }

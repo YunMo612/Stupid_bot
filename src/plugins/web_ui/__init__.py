@@ -8,6 +8,7 @@ import zipfile
 import shutil
 import asyncio
 import nonebot
+import json
 from nonebot.plugin import PluginMetadata
 from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
@@ -104,30 +105,42 @@ async def websocket_logs(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
 
-# ==================== 📦 插件列表 API ====================
+# ==================== 🔌 插件列表 API (支持读取 plugins.json) ====================
 @app.get("/api/plugins")
 async def get_plugins():
     plugins_dir = os.path.join(os.getcwd(), "src", "plugins")
-    plugin_list = []
+    json_path = os.path.join(os.getcwd(), "plugins.json")
     
-    if not os.path.exists(plugins_dir):
-        return {"plugins": []}
-        
-    for folder in os.listdir(plugins_dir):
-        if folder == "__pycache__" or os.path.isfile(os.path.join(plugins_dir, folder)):
-            continue
-        
-        is_disabled = folder.startswith("_")
-        base_name = folder.lstrip("_")
-        
-        plugin_list.append({
-            "name": base_name,
-            "raw_name": folder, 
-            "status": "disabled" if is_disabled else "active"
-        })
-        
-    plugin_list.sort(key=lambda x: x["name"])
-    return {"plugins": plugin_list}
+    # 读取元数据配置
+    meta_data = {}
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                meta_data = json.load(f)
+        except Exception:
+            pass
+
+    plugins_info = []
+    if os.path.exists(plugins_dir):
+        for item in os.listdir(plugins_dir):
+            item_path = os.path.join(plugins_dir, item)
+            if os.path.isdir(item_path) and not item.startswith("__"):
+                status = "disabled" if item.startswith("_") else "active"
+                base_name = item.lstrip("_")
+                
+                # 获取配置信息，如果没有则给默认值
+                p_meta = meta_data.get(base_name, {})
+                plugins_info.append({
+                    "raw_name": item,
+                    "name": base_name,
+                    "status": status,
+                    "name_zh": p_meta.get("name_zh", base_name),
+                    "description": p_meta.get("description", "暂无模块描述信息..."),
+                    "version": p_meta.get("version", "v1.0"),
+                    "can_disable": p_meta.get("can_disable", True),
+                    "can_delete": p_meta.get("can_delete", True)
+                })
+    return {"plugins": plugins_info}
 
 # ==================== 🔌 插件开关 API ====================
 class ToggleRequest(BaseModel):
@@ -141,10 +154,15 @@ async def toggle_plugin(req: ToggleRequest):
     active_path = os.path.join(plugins_dir, base_name)
     disabled_path = os.path.join(plugins_dir, f"_{base_name}")
     
-    # 🌟 终极魔法：我们去戳 plugins 目录下的 __init__.py
-    # 这个文件绝对会被监控！如果没有我们就动态建一个。
+    # 🛡️ 安全拦截：检查 plugins.json 是否允许禁用
+    json_path = os.path.join(os.getcwd(), "plugins.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r", encoding="utf-8") as f:
+            meta_data = json.load(f)
+            if meta_data.get(base_name, {}).get("can_disable") is False and req.target_status == "disabled":
+                return {"status": "error", "msg": f"核心限制：[{base_name}] 禁止被禁用！"}
+                
     trigger_file = os.path.join(plugins_dir, "__init__.py")
-    
     def trigger_reload():
         if not os.path.exists(trigger_file):
             with open(trigger_file, "w", encoding="utf-8") as f:
@@ -152,20 +170,17 @@ async def toggle_plugin(req: ToggleRequest):
         os.utime(trigger_file, None)
 
     try:
-        if req.target_status == "disabled":
-            if os.path.exists(active_path):
-                os.rename(active_path, disabled_path)
-                trigger_reload() # 触发重启！
-                return {"status": "success", "msg": f"已禁用 {base_name}"}
-        else:
-            if os.path.exists(disabled_path):
-                os.rename(disabled_path, active_path)
-                trigger_reload() # 触发重启！
-                return {"status": "success", "msg": f"已启用 {base_name}"}
-                
-        return {"status": "error", "msg": "找不到该插件的物理文件夹！"}
+        if req.target_status == "disabled" and os.path.exists(active_path):
+            os.rename(active_path, disabled_path)
+            trigger_reload()
+            return {"status": "success"}
+        elif req.target_status == "active" and os.path.exists(disabled_path):
+            os.rename(disabled_path, active_path)
+            trigger_reload()
+            return {"status": "success"}
+        return {"status": "error", "msg": "找不到该插件文件夹！"}
     except Exception as e:
-        return {"status": "error", "msg": f"操作失败: {e}"}
+        return {"status": "error", "msg": str(e)}
 
 # ==================== 🗑️ 插件删除 API ====================
 class DeleteRequest(BaseModel):
@@ -177,27 +192,27 @@ async def delete_plugin(req: DeleteRequest):
     target_path = os.path.join(plugins_dir, req.raw_name)
     base_name = req.raw_name.lstrip("_")
     
-    # 🛡️ 绝对防御：禁止面板自杀或删除核心组件
-    if base_name in ["web_ui", "common_core"]:
-        return {"status": "error", "msg": f"警告：[{base_name}] 是系统核心组件，禁止强制销毁！"}
+    # 🛡️ 安全拦截：检查 plugins.json 是否允许删除
+    json_path = os.path.join(os.getcwd(), "plugins.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r", encoding="utf-8") as f:
+            meta_data = json.load(f)
+            if meta_data.get(base_name, {}).get("can_delete") is False:
+                return {"status": "error", "msg": f"致命拦截：[{base_name}] 是受保护的底层资产，禁止物理销毁！"}
         
     def trigger_reload():
         trigger_file = os.path.join(plugins_dir, "__init__.py")
-        if not os.path.exists(trigger_file):
-            with open(trigger_file, "w", encoding="utf-8") as f:
-                f.write("# Auto-generated to trigger reload\n")
         os.utime(trigger_file, None)
 
     try:
         if os.path.exists(target_path) and os.path.isdir(target_path):
-            shutil.rmtree(target_path)  # 💥 物理连根拔起
-            trigger_reload()            # 触发框架重启
-            return {"status": "success", "msg": f"已彻底销毁 {base_name}"}
-            
-        return {"status": "error", "msg": "找不到该插件的物理文件夹！"}
+            shutil.rmtree(target_path)
+            trigger_reload()
+            return {"status": "success"}
+        return {"status": "error", "msg": "找不到文件夹！"}
     except Exception as e:
-        return {"status": "error", "msg": f"销毁失败: {e}"}
-
+        return {"status": "error", "msg": str(e)}
+    
 # ==================== ☁️ ZIP 热安装 API ====================
 @app.post("/api/plugins/upload")
 async def upload_plugin_zip(file: UploadFile = File(...)):
