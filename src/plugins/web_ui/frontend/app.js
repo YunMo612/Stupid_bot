@@ -154,7 +154,7 @@ function switchTab(pageId, element, title) {
     document.querySelectorAll('.page-container').forEach(page => page.classList.remove('active')); document.getElementById(pageId).classList.add('active');
     if (window.innerWidth <= 768) toggleMobileMenu();
     if (ws) { ws.close(); ws = null; }
-    if (pageId === 'page-network') loadNetworkConfig();
+    if (pageId === 'page-env') loadEnvConfig();
     if (pageId === 'page-plugins') loadPlugins();
     if (pageId === 'page-logs') initLogWebSocket(); 
 }
@@ -162,13 +162,137 @@ function switchTab(pageId, element, title) {
 // === API 请求 ===
 async function checkSystem() { const box = document.getElementById('status-box'); box.innerText = '正在探测...'; try { const res = await fetch('/api/system/status'); box.innerHTML = `<span class="log-info">[SYSTEM]</span>\n${JSON.stringify(await res.json(), null, 2)}`; } catch (e) { box.innerHTML = `<span class="log-error">[ERROR]</span> ${e.message}`; } }
 async function checkAI() { const box = document.getElementById('status-box'); box.innerText = 'PING 大模型...'; try { const res = await fetch('/api/ai/status', {method: 'POST'}); box.innerHTML = `<span class="log-success">[AI CORE]</span>\n${JSON.stringify(await res.json(), null, 2)}`; } catch (e) { box.innerHTML = `<span class="log-error">[ERROR]</span> 未响应`; } }
-async function loadNetworkConfig() { try { const res = await fetch('/api/config/network'); const data = await res.json(); document.getElementById('input-llama').value = data.llama_url || ""; document.getElementById('input-router').value = data.router_url || ""; } catch(e) {} }
-async function saveNetworkConfig() {
-    const btn = document.getElementById('btn-save-net'); const msg = document.getElementById('save-msg'); btn.innerText = "⏳ 保存...";
-    try { const res = await fetch('/api/config/network', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({llama_url: document.getElementById('input-llama').value.trim(), router_url: document.getElementById('input-router').value.trim()}) });
-        const data = await res.json(); if (data.status === 'success') { msg.className = "log-success"; msg.innerText = "✔️ " + data.message; } else { msg.className = "log-error"; msg.innerText = "❌ " + data.message; }
-    } catch(e) { msg.className = "log-error"; msg.innerText = "❌ 失败"; }
-    btn.innerText = "💾 保存配置"; setTimeout(() => { msg.innerText = ""; msg.className = ""; }, 3000);
+// === 4. 🎛️ 全局 .env 环境配置动态管理器 ===
+let currentEnvConfig = {};
+
+async function loadEnvConfig() {
+    try {
+        const res = await fetch('/api/config/env');
+        const data = await res.json();
+        if (data.status === 'success') {
+            currentEnvConfig = data.data;
+            renderEnvConfig();
+        }
+    } catch(e) {
+        document.getElementById('env-list-container').innerHTML = "<div class='log-error'>解析 .env 配置文件失败！</div>";
+    }
+}
+
+// 智能渲染引擎
+function renderEnvConfig() {
+    const container = document.getElementById('env-list-container');
+    container.innerHTML = '';
+    
+    // 如果文件是空的
+    if (Object.keys(currentEnvConfig).length === 0) {
+        container.innerHTML = "<div style='color:var(--text-muted); text-align:center; padding: 20px;'>配置文件暂无数据，请点击上方新增。</div>";
+        return;
+    }
+
+    for (const [key, val] of Object.entries(currentEnvConfig)) {
+        // 🌟 智能控件判定：如果是布尔值，渲染为丝滑的开关
+        const isBool = (val.toLowerCase() === 'true' || val.toLowerCase() === 'false');
+        let inputHtml = '';
+        
+        if (isBool) {
+            const isChecked = val.toLowerCase() === 'true' ? 'checked' : '';
+            inputHtml = `
+                <label class="switch" style="margin-top:0;">
+                    <input type="checkbox" onchange="updateEnvVal('${key}', this.checked ? 'true' : 'false')" ${isChecked}>
+                    <span class="slider round"></span>
+                </label>
+            `;
+        } else {
+            // 普通字符串，处理引号转义防注入
+            const safeVal = val.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            inputHtml = `<input type="text" class="glass-input" value="${safeVal}" onchange="updateEnvVal('${key}', this.value)" placeholder="输入变量值...">`;
+        }
+
+        container.innerHTML += `
+            <div class="env-row">
+                <div class="env-key">${key}</div>
+                <div class="env-val">${inputHtml}</div>
+                <button class="env-del-btn" onclick="deleteEnvVar('${key}')" title="永久删除此变量">🗑️</button>
+            </div>
+        `;
+    }
+}
+
+// 值更新绑定
+window.updateEnvVal = function(key, val) {
+    currentEnvConfig[key] = val;
+}
+
+// 删除变量
+window.deleteEnvVar = function(key) {
+    if (confirm(`[ 危险操作 ]\n\n确定要从 .env 中永久删除环境变量 【 ${key} 】 吗？\n该操作会导致依赖此变量的插件无法运行。`)) {
+        delete currentEnvConfig[key];
+        renderEnvConfig(); // 重新渲染 UI
+    }
+}
+
+// === 🎛️ 优雅的新增变量弹窗逻辑 ===
+window.addNewEnvVar = function() {
+    // 清空上次输入残留
+    document.getElementById('new-env-key').value = '';
+    document.getElementById('new-env-val').value = '';
+    // 呼出定制弹窗
+    document.getElementById('add-env-modal').classList.add('show');
+    // 自动聚焦第一个输入框
+    setTimeout(() => document.getElementById('new-env-key').focus(), 100);
+}
+
+window.closeAddEnvModal = function() {
+    document.getElementById('add-env-modal').classList.remove('show');
+}
+
+window.confirmAddEnvVar = function() {
+    const keyInput = document.getElementById('new-env-key').value.trim();
+    const valInput = document.getElementById('new-env-val').value.trim();
+    
+    // 规范化键名：大写且只允许字母数字下划线
+    const cleanKey = keyInput.toUpperCase().replace(/[^A-Z0-9_]/g, ""); 
+    
+    if (!cleanKey) {
+        alert("键名不合法！只能包含字母、数字和下划线。");
+        document.getElementById('new-env-key').focus();
+        return;
+    }
+    
+    if (currentEnvConfig[cleanKey] !== undefined) {
+        alert("⚠️ 该变量已存在于列表中！");
+        document.getElementById('new-env-key').focus();
+        return;
+    }
+    
+    // 插入新变量并刷新列表
+    currentEnvConfig[cleanKey] = valInput;
+    closeAddEnvModal();
+    renderEnvConfig();
+}
+
+// 全量保存回写
+async function saveEnvConfig() {
+    const btn = document.getElementById('btn-save-env');
+    const msg = document.getElementById('save-env-msg');
+    btn.innerText = "⏳ 覆写文件深层数据中...";
+    try {
+        const res = await fetch('/api/config/env', { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({config: currentEnvConfig}) 
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            msg.className = "log-success"; msg.innerText = "✔️ " + data.msg;
+        } else {
+            msg.className = "log-error"; msg.innerText = "❌ " + data.msg;
+        }
+    } catch(e) {
+        msg.className = "log-error"; msg.innerText = "❌ 网络传输异常";
+    }
+    btn.innerText = "💾 保存配置到 .env";
+    setTimeout(() => { msg.innerText = ""; msg.className = ""; }, 3500);
 }
 
 // === 🌟 升级版插件管理 (接入 plugins.json) ===

@@ -20,7 +20,7 @@
         
         <ul class="menu">
             <li class="menu-item active" onclick="switchTab('page-dashboard', this, '📊 基础信息')">📊 基础信息</li>
-            <li class="menu-item" onclick="switchTab('page-network', this, '🌐 网络配置')">🌐 网络配置</li>
+           <li class="menu-item" onclick="switchTab('page-env', this, '🎛️ 环境配置')">🎛️ 环境配置</li>
             <li class="menu-item" onclick="switchTab('page-plugins', this, '📦 插件管理')">📦 插件管理</li>
             <li class="menu-item" onclick="switchTab('page-logs', this, '📝 神经日志')">📝 神经日志</li>
             <li class="menu-item" onclick="switchTab('page-settings', this, '⚙️ 系统设置')">⚙️ 系统设置</li>
@@ -49,21 +49,21 @@
             </div>
         </div>
 
-        <div id="page-network" class="page-container">
+        <div id="page-env" class="page-container">
             <div class="card glass-panel" data-interactive="true">
-                <h3>大模型 API 路由配置</h3>
-                <p class="text-muted">修改后将自动保存至 .env 文件，部分设置可能需要重启底层生效。</p>
-                <div class="input-group">
-                    <label>LLAMA_SERVER_URL</label>
-                    <input type="text" id="input-llama" class="glass-input">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="margin: 0;">🎛️ 全局核心环境变量</h3>
+                    <button class="glass-btn btn-outline" onclick="addNewEnvVar()">➕ 新增变量</button>
                 </div>
-                <div class="input-group">
-                    <label>ROUTER_URL (路由转发节点)</label>
-                    <input type="text" id="input-router" class="glass-input">
+                <p class="text-muted" style="margin-top: 10px;">可视化管理底层 .env 配置文件。修改将安全保留原文件内的注释，系统需重启后生效。</p>
+                
+                <div id="env-list-container" style="margin-top: 20px;">
+                    <div style="color:rgba(var(--monet-rgb),1); text-align:center; padding: 20px;">⏳ 正在解析 .env 配置文件...</div>
                 </div>
-                <div class="btn-group-responsive align-center">
-                    <button id="btn-save-net" class="toggle-btn glass-btn" onclick="saveNetworkConfig()">💾 保存配置到 .env</button>
-                    <span id="save-msg" style="font-weight: bold;"></span>
+                
+                <div class="btn-group-responsive align-center" style="margin-top: 25px;">
+                    <button id="btn-save-env" class="toggle-btn glass-btn special-glow" onclick="saveEnvConfig()">💾 保存配置到 .env</button>
+                    <span id="save-env-msg" style="font-weight: bold;"></span>
                 </div>
             </div>
         </div>
@@ -120,7 +120,7 @@
                         <span class="text-muted" style="font-size:0.8rem; margin:0;">禁用后可大幅降低旧设备的 GPU 占用。</span>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" id="setting-anim" onchange="toggleSetting('animations', this.checked)" checked>
+                        <input type="checkbox" id="setting-anim" onchange="toggleSetting('anim', this.checked)" checked>
                         <span class="slider round"></span>
                     </label>
                 </div>
@@ -153,6 +153,39 @@
         </div>
     </div>
 
+    <div id="add-env-modal" class="modal-overlay">
+        <div class="modal-box glass-panel" style="max-width: 450px; text-align: left;">
+            <h3 style="margin-top: 0; margin-bottom: 20px; color: var(--text-main); font-size: 1.4rem;">➕ 新增环境变量</h3>
+            
+            <div class="input-group">
+                <label style="color: var(--text-muted); font-size: 0.85rem;">变量名 (KEY) - 支持自动补全</label>
+                <input type="text" id="new-env-key" class="glass-input code-font" placeholder="例如: SUPERUSERS" list="env-keys-list" autocomplete="off">
+                
+                <datalist id="env-keys-list">
+                    <option value="HOST">
+                    <option value="PORT">
+                    <option value="SUPERUSERS">
+                    <option value="COMMAND_START">
+                    <option value="COMMAND_SEP">
+                    <option value="LOG_LEVEL">
+                    <option value="LLAMA_SERVER_URL">
+                    <option value="ROUTER_URL">
+                    <option value="API_KEY">
+                </datalist>
+            </div>
+            
+            <div class="input-group">
+                <label style="color: var(--text-muted); font-size: 0.85rem;">初始值 (VALUE) - 选填</label>
+                <input type="text" id="new-env-val" class="glass-input code-font string-highlight" placeholder='例如: ["123456"]' autocomplete="off">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;">
+                <button class="toggle-btn glass-btn" onclick="closeAddEnvModal()">取消</button>
+                <button class="toggle-btn glass-btn" style="border-color: #a3be8c; color: #a3be8c; background: rgba(163, 190, 140, 0.15);" onclick="confirmAddEnvVar()">确认添加</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="./app.js"></script>
 </body>
 </html>

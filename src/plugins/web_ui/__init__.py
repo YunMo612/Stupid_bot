@@ -23,10 +23,6 @@ __plugin_meta__ = PluginMetadata(
 
 app: FastAPI = nonebot.get_app()
 
-class NetworkConfig(BaseModel):
-    llama_url: str
-    router_url: str
-
 class PluginToggle(BaseModel):
     raw_name: str
     target_status: str
@@ -38,26 +34,65 @@ PLUGIN_DIR = os.path.join(os.getcwd(), "src", "plugins")
 async def get_system_status():
     return {"status": "online", "framework": "NoneBot2 + FastAPI"}
 
-@app.get("/api/config/network")
-async def get_network_config():
-    llama_url, router_url = "", ""
+# ==================== 🎛️ 全局 .env 配置管理 API (全新) ====================
+@app.get("/api/config/env")
+async def get_env_config():
+    """解析并返回 .env 文件中的所有键值对"""
+    config = {}
     if os.path.exists(ENV_PATH):
         with open(ENV_PATH, "r", encoding="utf-8") as f:
-            content = f.read()
-            match_llama = re.search(r'^LLAMA_SERVER_URL=[\'"]?(.*?)[\'"]?$', content, re.M)
-            match_router = re.search(r'^ROUTER_URL=[\'"]?(.*?)[\'"]?$', content, re.M)
-            if match_llama: llama_url = match_llama.group(1)
-            if match_router: router_url = match_router.group(1)
-    return {"llama_url": llama_url, "router_url": router_url}
+            for line in f:
+                stripped = line.strip()
+                # 忽略空行和注释行，提取键值对
+                if stripped and not stripped.startswith("#") and "=" in stripped:
+                    key, val = stripped.split("=", 1)
+                    # 去除两端空格以及可能存在的引号
+                    config[key.strip()] = val.strip().strip("'").strip('"')
+    return {"status": "success", "data": config}
 
-@app.post("/api/config/network")
-async def update_network_config(config: NetworkConfig):
-    if not os.path.exists(ENV_PATH): return {"status": "error"}
-    with open(ENV_PATH, "r", encoding="utf-8") as f: content = f.read()
-    content = re.sub(r'^LLAMA_SERVER_URL=.*$', f'LLAMA_SERVER_URL="{config.llama_url}"', content, flags=re.M)
-    content = re.sub(r'^ROUTER_URL=.*$', f'ROUTER_URL="{config.router_url}"', content, flags=re.M)
-    with open(ENV_PATH, "w", encoding="utf-8") as f: f.write(content)
-    return {"status": "success", "message": "已成功写入 .env (重启后生效)"}
+class EnvConfig(BaseModel):
+    config: dict
+
+@app.post("/api/config/env")
+async def save_env_config(req: EnvConfig):
+    """覆写 .env 文件，同时智能保留注释和空行"""
+    lines = []
+    if os.path.exists(ENV_PATH):
+        with open(ENV_PATH, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+    new_config = req.config
+    output_lines = []
+    handled_keys = set()
+
+    # 1. 遍历原文件，保留注释，更新已存在的值，剔除被前端删除的值
+    for line in lines:
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#") and "=" in stripped:
+            key = stripped.split("=", 1)[0].strip()
+            if key in new_config:
+                # 更新存在的值
+                output_lines.append(f"{key}={new_config[key]}\n")
+                handled_keys.add(key)
+            else:
+                # 前端删除了这个键，所以我们丢弃这行
+                pass
+        else:
+            # 原封不动地保留空行和注释行
+            output_lines.append(line)
+
+    # 2. 追加前端新增的变量
+    for key, val in new_config.items():
+        if key not in handled_keys:
+            output_lines.append(f"{key}={val}\n")
+
+    # 3. 覆写回 .env
+    try:
+        with open(ENV_PATH, "w", encoding="utf-8") as f:
+            f.writelines(output_lines)
+        return {"status": "success", "msg": "环境变量已覆盖写入，重启后生效！"}
+    except Exception as e:
+        return {"status": "error", "msg": f"写入失败: {e}"}
 
 # ==================== 🌟 终极进化：WebSocket 实时日志引擎 ====================
 @app.websocket("/api/logs/ws")

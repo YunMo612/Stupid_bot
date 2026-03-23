@@ -151,3 +151,56 @@ body.dark-theme .log-success { text-shadow: 0 0 8px rgba(var(--log-success), 0.4
     .plugin-actions { width: 100%; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--glass-border); }
     .log-card { height: 70vh; }
 }
+
+/* ==========================================
+   🎛️ .env 动态配置列表专属样式
+   ========================================== */
+.env-row {
+    display: flex; align-items: center; gap: 15px; margin-bottom: 12px;
+    background: rgba(var(--monet-rgb), 0.05); padding: 12px 15px; border-radius: 8px;
+    border: 1px solid var(--glass-border); transition: all 0.3s ease;
+}
+.env-row:hover { 
+    border-color: rgba(var(--monet-rgb), 0.5); 
+    box-shadow: 0 4px 15px rgba(var(--monet-rgb), 0.1); 
+    transform: translateX(3px); /* 悬停微动 */
+}
+
+/* 键名样式：等宽字体，专业感 */
+.env-key { 
+    flex: 0 0 180px; 
+    font-family: 'Consolas', monospace; font-weight: bold; 
+    color: var(--text-main); word-break: break-all;
+}
+
+/* 值输入区撑满 */
+.env-val { flex: 1; }
+.env-val input { margin-bottom: 0 !important; } /* 覆盖默认边距 */
+
+/* 危险删除小按钮 */
+.env-del-btn { 
+    background: transparent; border: none; color: #bf616a; 
+    cursor: pointer; font-size: 1.3rem; transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); 
+}
+.env-del-btn:hover { transform: scale(1.3) rotate(10deg); text-shadow: 0 0 10px rgba(191,97,106,0.6); }
+
+/* 移动端适配 .env 列表换行 */
+@media screen and (max-width: 768px) {
+    .env-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .env-key { flex: auto; width: 100%; border-bottom: 1px dashed var(--glass-border); padding-bottom: 5px; }
+    .env-val { width: 100%; }
+    .env-del-btn { align-self: flex-end; }
+}
+
+/* ==========================================
+   🎛️ 代码输入框伪高亮质感
+   ========================================== */
+.code-font { 
+    font-family: 'Consolas', 'Courier New', monospace !important; 
+    font-weight: bold; 
+    letter-spacing: 0.5px;
+    color: rgba(var(--monet-rgb), 1) !important; /* Key 使用莫奈色高亮 */
+}
+.string-highlight {
+    color: #a3be8c !important; /* Value 使用经典的字符串绿色高亮 */
+}
