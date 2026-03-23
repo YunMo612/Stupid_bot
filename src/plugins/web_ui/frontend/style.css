@@ -140,7 +140,8 @@ body.dark-theme .log-success { text-shadow: 0 0 8px rgba(var(--log-success), 0.4
     #mobile-menu-btn { display: block; }
     .sidebar { position: fixed; top: 0; left: 0; height: 100vh; margin: 0; border-radius: 0; border-right: 1px solid rgba(255,255,255,0.2); transform: translateX(-100%); width: 250px; }
     .sidebar.mobile-open { transform: translateX(0); }
-    .main-content { padding: 15px; height: auto; overflow-y: visible; }
+    /* 🌟 核心修复：恢复移动端的独立滚动，并增加底部留白防止被悬浮按钮遮挡 */
+    .main-content { padding: 15px 15px 85px 15px; height: 100vh; overflow-y: auto; }
     .card { padding: 18px; margin-bottom: 15px; }
     .theme-float-btn { bottom: 20px; left: 20px; width: 45px; height: 45px; z-index: 2000; }
     .btn-group-responsive { flex-direction: column; align-items: stretch; gap: 10px; }

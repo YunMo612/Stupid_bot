@@ -140,15 +140,15 @@
 
     </div>
 
-    <div id="delete-modal" class="modal-overlay">
+    <div id="env-delete-modal" class="modal-overlay">
         <div class="modal-box glass-panel">
             <div class="modal-icon" style="text-shadow: 0 0 20px #bf616a;">⚠️</div>
-            <h3 class="modal-title" style="text-shadow: 0 0 10px rgba(191,97,106,0.5);">严 重 警 告</h3>
-            <p class="modal-text">您即将物理删除模块：<br><strong id="delete-plugin-name"></strong></p>
-            <p class="modal-subtext">此操作不可逆，所有代码文件将从硬盘上永久抹除！</p>
+            <h3 class="modal-title" style="text-shadow: 0 0 10px rgba(191,97,106,0.5);">危 险 操 作</h3>
+            <p class="modal-text">确定要永久删除环境变量：<br><strong id="env-delete-key" style="color: #bf616a; font-family: 'Consolas', monospace; font-size: 1.3rem;"></strong></p>
+            <p class="modal-subtext">该操作可能导致依赖此变量的底层模块无法正常运行！</p>
             <div class="modal-actions">
-                <button class="toggle-btn glass-btn" onclick="closeDeleteModal()">取消操作</button>
-                <button class="delete-btn glass-btn-danger" onclick="executeDelete()">🗑️ 确认销毁</button>
+                <button class="toggle-btn glass-btn" onclick="closeEnvDeleteModal()">取消操作</button>
+                <button class="delete-btn glass-btn-danger" onclick="executeEnvDelete()">🗑️ 确认删除</button>
             </div>
         </div>
     </div>

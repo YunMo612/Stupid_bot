@@ -223,12 +223,30 @@ window.updateEnvVal = function(key, val) {
     currentEnvConfig[key] = val;
 }
 
-// 删除变量
+// === 🗑️ 优雅的环境变量删除弹窗逻辑 ===
+let currentEnvKeyToDelete = null;
+
+// 1. 拦截点击，呼出自定义弹窗
 window.deleteEnvVar = function(key) {
-    if (confirm(`[ 危险操作 ]\n\n确定要从 .env 中永久删除环境变量 【 ${key} 】 吗？\n该操作会导致依赖此变量的插件无法运行。`)) {
-        delete currentEnvConfig[key];
-        renderEnvConfig(); // 重新渲染 UI
-    }
+    currentEnvKeyToDelete = key;
+    document.getElementById('env-delete-key').innerText = key;
+    document.getElementById('env-delete-modal').classList.add('show');
+}
+
+// 2. 关闭弹窗
+window.closeEnvDeleteModal = function() {
+    currentEnvKeyToDelete = null;
+    document.getElementById('env-delete-modal').classList.remove('show');
+}
+
+// 3. 确认执行删除 (从内存移除并重绘 UI，需点击保存才写入文件)
+window.executeEnvDelete = function() {
+    if (!currentEnvKeyToDelete) return;
+    const key = currentEnvKeyToDelete;
+    
+    delete currentEnvConfig[key];
+    closeEnvDeleteModal();
+    renderEnvConfig(); // 重新渲染 UI
 }
 
 // === 🎛️ 优雅的新增变量弹窗逻辑 ===

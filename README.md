@@ -17,6 +17,7 @@
 ---
  - [ ] FastAPI
  - [ ] WebUI完善
+ - -  [ ] 修bug
  - [ ] 完善readme
 
 ---
