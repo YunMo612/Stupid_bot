@@ -1,0 +1,367 @@
+:root {
+    /* MD3 基础色彩系统 (基于你原有的 --monet-rgb) */
+    --md-sys-color-primary-rgb: 137, 180, 250;
+    --md-sys-color-primary: rgb(var(--md-sys-color-primary-rgb));
+    --md-sys-color-on-primary: #ffffff;
+    
+    --md-sys-color-error-rgb: 186, 26, 26;
+    --md-sys-color-error: rgb(var(--md-sys-color-error-rgb));
+    --md-sys-color-on-error: #ffffff;
+    
+    /* MD3 毛玻璃表面色彩 (Surface) */
+    --md-glass-surface: rgba(255, 255, 255, 0.75);
+    --md-glass-surface-container: rgba(243, 244, 249, 0.65);
+    --md-glass-surface-container-highest: rgba(225, 227, 232, 0.85);
+    --md-glass-outline: rgba(116, 119, 127, 0.2);
+    --md-glass-outline-variant: rgba(116, 119, 127, 0.4);
+    
+    /* 文本色彩 */
+    --text-main: #1a1b20;
+    --text-muted: #44474e;
+    
+    /* 遮罩层与日志 */
+    --overlay-color: rgba(255, 255, 255, 0.4);
+    --log-success: #146c2e; --log-info: #005ac1; --log-warn: #8c5000; --log-error: #ba1a1a;
+    
+    /* MD3 动画曲线 Standard easing */
+    --md-sys-motion-easing: cubic-bezier(0.2, 0, 1, 1);
+}
+
+body.dark-theme {
+    /* 暗黑模式重写 */
+    --md-glass-surface: rgba(20, 18, 24, 0.75);
+    --md-glass-surface-container: rgba(30, 26, 34, 0.65);
+    --md-glass-surface-container-highest: rgba(50, 47, 55, 0.85);
+    --md-glass-outline: rgba(147, 143, 153, 0.2);
+    --md-glass-outline-variant: rgba(147, 143, 153, 0.5);
+    
+    --text-main: #e6e0e9;
+    --text-muted: #cac4d0;
+    
+    --md-sys-color-error-rgb: 255, 180, 171;
+    --md-sys-color-error: rgb(var(--md-sys-color-error-rgb));
+    --md-sys-color-on-error: #690005;
+
+    --overlay-color: rgba(0, 0, 0, 0.6);
+    --log-success: #6dd58c; --log-info: #a8c7fa; --log-warn: #ffb86f; --log-error: #ffb4ab;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { 
+    font-family: 'Roboto', -apple-system, sans-serif; 
+    color: var(--text-main); 
+    display: flex; 
+    height: 100vh; 
+    overflow: hidden; 
+    background-size: cover; 
+    background-position: center; 
+    background-attachment: fixed; 
+    transition: color 0.3s var(--md-sys-motion-easing); 
+}
+
+.glass-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--overlay-color); z-index: -1; transition: background 0.5s ease; }
+
+/* 降级模式 */
+body.no-glass .glass-overlay { background: var(--md-glass-surface); opacity: 0.98; backdrop-filter: none; }
+body.no-glass .glass-panel, body.no-glass .glass-panel-inner, body.no-glass .glass-btn, body.no-glass .modal-overlay { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body.no-anim * { transition: none !important; animation: none !important; }
+
+/* MD3 表面层与毛玻璃融合 */
+.glass-panel { 
+    background: var(--md-glass-surface); 
+    backdrop-filter: blur(24px); 
+    -webkit-backdrop-filter: blur(24px); 
+    border: 1px solid var(--md-glass-outline); 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); /* MD3 Elevation 1 */
+    position: relative; 
+    overflow: hidden; 
+}
+
+.glass-panel-inner { 
+    background: var(--md-glass-surface-container); 
+    backdrop-filter: blur(12px); 
+    border: 1px solid var(--md-glass-outline); 
+    border-radius: 12px; 
+}
+
+.neon-text { font-weight: 600; } /* 移除刺眼的阴影，保留加粗 */
+
+/* ==========================================
+   🧩 MD3 组件库
+   ========================================== */
+
+/* 按钮 (MD3 Tonal Button / Filled Button) */
+.glass-btn { 
+    background: rgba(var(--md-sys-color-primary-rgb), 0.12); /* Tonal 状态 */
+    color: var(--md-sys-color-primary); 
+    border: none; 
+    padding: 10px 24px; 
+    border-radius: 100px; /* MD3 标志性胶囊圆角 */
+    cursor: pointer; 
+    font-weight: 500; 
+    font-size: 0.9rem; 
+    transition: background 0.2s var(--md-sys-motion-easing), color 0.2s var(--md-sys-motion-easing); 
+    position: relative; 
+    z-index: 10; 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.glass-btn:hover { background: rgba(var(--md-sys-color-primary-rgb), 0.2); }
+.glass-btn:active { background: rgba(var(--md-sys-color-primary-rgb), 0.3); }
+
+/* 危险按钮 (MD3 Error Tonal) */
+.glass-btn-danger { 
+    background: rgba(var(--md-sys-color-error-rgb), 0.12); 
+    color: var(--md-sys-color-error); 
+    border: none; 
+    padding: 10px 24px; 
+    border-radius: 100px; 
+    cursor: pointer; 
+    font-weight: 500; 
+    font-size: 0.9rem;
+    transition: all 0.2s var(--md-sys-motion-easing); 
+    margin-left: 0 !important; 
+}
+.glass-btn-danger:hover { background: rgba(var(--md-sys-color-error-rgb), 0.2); }
+.glass-btn-danger:active { background: rgba(var(--md-sys-color-error-rgb), 0.3); }
+
+/* 禁用状态 */
+.glass-btn:disabled, .glass-btn-danger:disabled, .glass-btn-disabled { 
+    background: rgba(31, 31, 31, 0.12) !important; 
+    color: rgba(31, 31, 31, 0.38) !important; 
+    border: none !important;
+    cursor: not-allowed !important; 
+    box-shadow: none !important; 
+}
+body.dark-theme .glass-btn:disabled, body.dark-theme .glass-btn-danger:disabled, body.dark-theme .glass-btn-disabled {
+    background: rgba(227, 227, 227, 0.12) !important; 
+    color: rgba(227, 227, 227, 0.38) !important;
+}
+
+/* 浮动按钮 (MD3 FAB) */
+.theme-float-btn { 
+    position: fixed; 
+    bottom: 32px; 
+    left: 32px; 
+    width: 56px; 
+    height: 56px; 
+    border-radius: 16px; /* MD3 FAB 圆角通常是16px */
+    background: rgba(var(--md-sys-color-primary-rgb), 0.2);
+    backdrop-filter: blur(10px);
+    color: var(--md-sys-color-primary);
+    font-size: 1.5rem; 
+    display: flex; align-items: center; justify-content: center; 
+    z-index: 2000; 
+    border: 1px solid var(--md-glass-outline);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23); /* MD3 Elevation 3 */
+    cursor: pointer;
+    transition: background 0.2s var(--md-sys-motion-easing), box-shadow 0.2s var(--md-sys-motion-easing);
+}
+.theme-float-btn:hover { background: rgba(var(--md-sys-color-primary-rgb), 0.3); box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23); }
+
+/* 输入框 (MD3 Outlined Text Field) */
+.input-group { margin-bottom: 24px; }
+.input-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem; color: var(--text-main); }
+.glass-input { 
+    width: 100%; 
+    padding: 14px 16px; 
+    background: transparent; 
+    border: 1px solid var(--md-glass-outline-variant); 
+    color: var(--text-main); 
+    border-radius: 4px; /* MD3 输入框标准圆角 */
+    font-size: 1rem; 
+    transition: border-color 0.2s var(--md-sys-motion-easing), box-shadow 0.2s var(--md-sys-motion-easing); 
+}
+.glass-input:focus { 
+    outline: none; 
+    border-color: var(--md-sys-color-primary); 
+    box-shadow: inset 0 0 0 1px var(--md-sys-color-primary); /* 模拟2px边框而不改变尺寸 */
+}
+
+/* 🌟 MD3 开关 (Switch) - 修复垂直居中与边距问题 */
+.switch { position: relative; display: inline-block; width: 52px; height: 32px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { 
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
+    background-color: var(--md-glass-surface-container-highest); 
+    border: 2px solid var(--text-muted); 
+    transition: 0.3s var(--md-sys-motion-easing); 
+    border-radius: 32px; 
+}
+
+/* 🌟 未选中状态的圆点 (内部高度28px，16px圆点需上下各留6px) */
+.slider:before { 
+    position: absolute; content: ""; 
+    height: 16px; width: 16px; 
+    left: 6px; 
+    top: 6px; /* 修正：精准垂直居中 */
+    background-color: var(--text-muted); 
+    transition: 0.3s var(--md-sys-motion-easing); 
+    border-radius: 50%; 
+}
+
+/* 🌟 选中状态下的圆点 (内部高度28px，24px圆点需上下各留2px) */
+input:checked + .slider { 
+    background-color: var(--md-sys-color-primary); 
+    border-color: var(--md-sys-color-primary); 
+}
+input:checked + .slider:before { 
+    transform: translateX(16px); /* 6px(初始) + 16px(位移) = 22px，距离右内边缘刚好2px */
+    height: 24px; width: 24px; 
+    top: 2px; /* 修正：精准垂直居中 */
+    background-color: var(--md-sys-color-on-primary); 
+}
+
+input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
+
+/* ==========================================
+   📐 布局体系
+   ========================================== */
+
+/* 侧边栏 (MD3 Navigation Drawer) */
+.sidebar { 
+    width: 280px; 
+    display: flex; flex-direction: column; 
+    z-index: 1000; 
+    margin: 16px; 
+    height: calc(100vh - 32px); 
+    border-radius: 16px; 
+    background: var(--md-glass-surface-container);
+    transition: transform 0.4s var(--md-sys-motion-easing); 
+}
+.sidebar-header { padding: 24px 24px 16px 24px; margin-bottom: 8px; }
+.menu { list-style: none; padding: 0 12px; }
+.menu-item { 
+    padding: 16px; 
+    margin-bottom: 4px; 
+    border-radius: 100px; /* MD3 胶囊选中态 */
+    cursor: pointer; 
+    color: var(--text-muted); 
+    font-weight: 500; 
+    transition: background 0.2s, color 0.2s; 
+}
+.menu-item:hover { background: rgba(var(--md-sys-color-primary-rgb), 0.08); color: var(--text-main); }
+.menu-item.active { 
+    background: rgba(var(--md-sys-color-primary-rgb), 0.16); /* Secondary container */
+    color: var(--md-sys-color-primary); 
+    font-weight: 600; 
+}
+
+/* 主内容区 */
+.main-content { flex: 1; padding: 16px 32px 16px 16px; overflow-y: auto; z-index: 1; height: 100vh; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+.card { border-radius: 16px; padding: 24px; margin-bottom: 24px; background: var(--md-glass-surface); border: 1px solid var(--md-glass-outline); }
+.card h3 { margin-bottom: 16px; font-size: 1.25rem; font-weight: 500; }
+.text-muted { color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5; }
+
+.btn-group-responsive { display: flex; gap: 12px; flex-wrap: wrap; }
+.align-center { align-items: center; }
+
+/* 移动端菜单按钮和遮罩 */
+#mobile-menu-btn { display: none; padding: 12px; font-size: 1.2rem; background: transparent; border: none; color: var(--text-main); cursor: pointer; }
+.mobile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: 900; opacity: 0; transition: opacity 0.3s ease; }
+.mobile-overlay.show { display: block; opacity: 1; }
+
+/* 设置页 */
+.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; flex-wrap: wrap; gap: 16px; }
+.settings-divider { border-bottom: 1px solid var(--md-glass-outline); margin: 8px 0; }
+
+/* 环境配置列表 (MD3 List Item 风格) */
+.env-row { 
+    display: flex; align-items: center; gap: 16px; margin-bottom: 8px; 
+    background: transparent; 
+    padding: 12px 16px; 
+    border-radius: 8px; 
+    border: 1px solid var(--md-glass-outline); 
+    transition: background 0.2s; 
+}
+.env-row:hover { background: rgba(var(--md-sys-color-primary-rgb), 0.04); }
+.env-key { flex: 0 0 180px; font-family: 'Consolas', monospace; font-weight: 500; color: var(--text-main); word-break: break-all; }
+.env-val { flex: 1; }
+.env-val input { margin-bottom: 0 !important; }
+.env-del-btn { background: transparent; border: none; color: var(--md-sys-color-error); cursor: pointer; font-size: 1.2rem; transition: background 0.2s; padding: 8px; border-radius: 50%; }
+.env-del-btn:hover { background: rgba(var(--md-sys-color-error-rgb), 0.12); }
+
+.code-font { font-family: 'Consolas', 'Courier New', monospace !important; font-weight: 500; color: var(--md-sys-color-primary) !important; }
+.string-highlight { color: #2e7d32 !important; }
+body.dark-theme .string-highlight { color: #81c995 !important; }
+
+/* 插件卡片 */
+.page-container { display: none; animation: fadeIn 0.3s var(--md-sys-motion-easing) forwards; }
+.page-container.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.plugin-item { display: flex; justify-content: space-between; align-items: center; padding: 20px; margin-bottom: 16px; border: 1px solid var(--md-glass-outline); border-radius: 16px; transition: background 0.2s; }
+.plugin-item:hover { background: rgba(var(--md-sys-color-primary-rgb), 0.04); }
+.plugin-info-main { display: flex; align-items: flex-start; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 16px; margin-top: 6px; flex-shrink: 0; }
+.status-active { background-color: var(--log-success); }
+.status-disabled { background-color: var(--log-error); }
+.plugin-details h4 { margin: 0 0 4px 0; font-size: 1.1rem; font-weight: 500; color: var(--text-main); }
+.plugin-details .meta-tags { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.meta-tag { font-family: 'Consolas', monospace; font-size: 0.75rem; padding: 4px 8px; border-radius: 8px; background: var(--md-glass-surface-container-highest); color: var(--text-muted); }
+.plugin-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; margin: 0; max-width: 500px; }
+.plugin-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* 拖拽上传区 */
+.drop-zone { border: 2px dashed var(--md-glass-outline-variant); padding: 40px 20px; text-align: center; cursor: pointer; border-radius: 16px; margin-top: 16px; transition: background 0.2s, border-color 0.2s; }
+.drop-zone:hover, .drop-zone.dragover { background: rgba(var(--md-sys-color-primary-rgb), 0.08); border-color: var(--md-sys-color-primary); }
+
+/* 控制台日志 */
+.console-box, .terminal-box { color: var(--text-main); font-family: 'Consolas', monospace; padding: 16px; white-space: pre-wrap; word-break: break-all; font-size: 0.9rem; line-height: 1.6; border-radius: 12px; background: var(--md-glass-surface-container-highest); }
+.console-box { min-height: 100px; margin-top: 16px; }
+.log-card { height: calc(100vh - 120px); display: flex; flex-direction: column; }
+.log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+.terminal-box { flex: 1; overflow-y: auto; }
+
+.log-success { color: var(--log-success); font-weight: 500; } .log-info { color: var(--log-info); font-weight: 500; } .log-warn { color: var(--log-warn); font-weight: 500; } .log-error { color: var(--log-error); font-weight: 500; }
+
+/* ==========================================
+   🖼️ 弹窗体系 (MD3 Dialog)
+   ========================================== */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.3s var(--md-sys-motion-easing); }
+.modal-overlay.show { opacity: 1; pointer-events: auto; }
+.modal-box { padding: 24px; width: 90%; max-width: 400px; text-align: center; background: var(--md-glass-surface); border-radius: 28px; /* MD3 标准对话框圆角 */ box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform: scale(0.9); transition: transform 0.3s var(--md-sys-motion-easing); }
+.modal-overlay.show .modal-box { transform: scale(1); }
+.modal-icon { font-size: 2.5rem; margin-bottom: 16px; color: var(--md-sys-color-error); }
+.modal-title { color: var(--text-main); margin-bottom: 16px; font-size: 1.5rem; font-weight: 400; }
+.modal-text { margin-bottom: 8px; color: var(--text-muted); font-size: 1rem; }
+#delete-plugin-name, #env-delete-key { color: var(--md-sys-color-error); font-family: 'Consolas', monospace; font-weight: 500; word-break: break-all; }
+.modal-subtext { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; } /* MD3 action 通常居右排布 */
+
+/* View Transition API 兼容 (保留原有逻辑) */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+.theme-transitioning::view-transition-new(root) { -webkit-mask-image: radial-gradient(circle at var(--mask-x) var(--mask-y), black calc(var(--mask-radius) - 30px), transparent var(--mask-radius)); mask-image: radial-gradient(circle at var(--mask-x) var(--mask-y), black calc(var(--mask-radius) - 30px), transparent var(--mask-radius)); animation: none; }
+.theme-transitioning::view-transition-old(root) { animation: none; z-index: -1; }
+
+/* ==========================================
+   📱 移动端与平板端适配
+   ========================================== */
+@media screen and (max-width: 1024px) { 
+    .sidebar { width: 260px; margin: 12px; } 
+    .main-content { padding: 12px 24px 12px 12px; } 
+    .theme-float-btn { bottom: 24px; left: 24px; } 
+}
+
+@media screen and (max-width: 768px) {
+    #mobile-menu-btn { display: block; }
+    .sidebar { position: fixed; top: 0; left: 0; height: 100vh; margin: 0; border-radius: 0 16px 16px 0; border: none; box-shadow: 0 0 24px rgba(0,0,0,0.2); transform: translateX(-100%); width: 280px; }
+    .sidebar.mobile-open { transform: translateX(0); }
+    
+    .main-content { padding: 16px 16px 85px 16px; height: 100vh; overflow-y: auto; }
+    .card { padding: 20px; margin-bottom: 16px; }
+    .theme-float-btn { bottom: 20px; right: 20px; left: auto; z-index: 2000; } /* MD3 FAB 建议在移动端居右下 */
+    .btn-group-responsive { flex-direction: column; align-items: stretch; gap: 8px; }
+    
+    .plugin-item { flex-direction: column; align-items: flex-start; padding: 16px; }
+    .plugin-actions { width: 100%; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--md-glass-outline); }
+    .log-card { height: 70vh; }
+    
+    .env-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .env-key { flex: auto; width: 100%; padding-bottom: 4px; }
+    .env-val { width: 100%; }
+    .env-del-btn { align-self: flex-end; }
+}
