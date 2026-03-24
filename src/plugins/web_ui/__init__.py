@@ -34,7 +34,7 @@ PLUGIN_DIR = os.path.join(os.getcwd(), "src", "plugins")
 async def get_system_status():
     return {"status": "online", "framework": "NoneBot2 + FastAPI"}
 
-# ==================== 🎛️ 全局 .env 配置管理 API (全新) ====================
+# ==================== 🎛️ 全局 .env 配置管理 API ====================
 @app.get("/api/config/env")
 async def get_env_config():
     """解析并返回 .env 文件中的所有键值对"""
@@ -43,10 +43,8 @@ async def get_env_config():
         with open(ENV_PATH, "r", encoding="utf-8") as f:
             for line in f:
                 stripped = line.strip()
-                # 忽略空行和注释行，提取键值对
                 if stripped and not stripped.startswith("#") and "=" in stripped:
                     key, val = stripped.split("=", 1)
-                    # 去除两端空格以及可能存在的引号
                     config[key.strip()] = val.strip().strip("'").strip('"')
     return {"status": "success", "data": config}
 
@@ -65,28 +63,20 @@ async def save_env_config(req: EnvConfig):
     output_lines = []
     handled_keys = set()
 
-    # 1. 遍历原文件，保留注释，更新已存在的值，剔除被前端删除的值
     for line in lines:
         stripped = line.strip()
         if stripped and not stripped.startswith("#") and "=" in stripped:
             key = stripped.split("=", 1)[0].strip()
             if key in new_config:
-                # 更新存在的值
                 output_lines.append(f"{key}={new_config[key]}\n")
                 handled_keys.add(key)
-            else:
-                # 前端删除了这个键，所以我们丢弃这行
-                pass
         else:
-            # 原封不动地保留空行和注释行
             output_lines.append(line)
 
-    # 2. 追加前端新增的变量
     for key, val in new_config.items():
         if key not in handled_keys:
             output_lines.append(f"{key}={val}\n")
 
-    # 3. 覆写回 .env
     try:
         with open(ENV_PATH, "w", encoding="utf-8") as f:
             f.writelines(output_lines)
@@ -94,7 +84,7 @@ async def save_env_config(req: EnvConfig):
     except Exception as e:
         return {"status": "error", "msg": f"写入失败: {e}"}
 
-# ==================== 🌟 终极进化：WebSocket 实时日志引擎 ====================
+# ==================== 🌟 WebSocket 实时日志引擎 ====================
 @app.websocket("/api/logs/ws")
 async def websocket_logs(websocket: WebSocket):
     await websocket.accept()
@@ -119,7 +109,6 @@ async def websocket_logs(websocket: WebSocket):
                 continue
                 
             latest_file = os.path.join(latest_folder, files[0])
-            
             current_mtime = os.stat(latest_file).st_mtime
             
             if current_mtime != last_mtime:
@@ -129,24 +118,18 @@ async def websocket_logs(websocket: WebSocket):
                         logs = "".join(lines[-300:])
                     
                     filtered_logs = "\n".join([line for line in logs.split("\n") if "GET /api/" not in line and "GET /ui" not in line])
-                    
                     await websocket.send_json({"status": "success", "logs": filtered_logs, "file": f"{folders[0]}/{files[0]}"})
                     last_mtime = current_mtime
                 except Exception:
                     pass
-            
             await asyncio.sleep(0.5)
-            
     except WebSocketDisconnect:
         pass
 
 # ==================== 🔌 插件列表 API (支持读取 plugins.json) ====================
 @app.get("/api/plugins")
 async def get_plugins():
-    plugins_dir = os.path.join(os.getcwd(), "src", "plugins")
     json_path = os.path.join(os.getcwd(), "plugins.json")
-    
-    # 读取元数据配置
     meta_data = {}
     if os.path.exists(json_path):
         try:
@@ -156,14 +139,12 @@ async def get_plugins():
             pass
 
     plugins_info = []
-    if os.path.exists(plugins_dir):
-        for item in os.listdir(plugins_dir):
-            item_path = os.path.join(plugins_dir, item)
+    if os.path.exists(PLUGIN_DIR):
+        for item in os.listdir(PLUGIN_DIR):
+            item_path = os.path.join(PLUGIN_DIR, item)
             if os.path.isdir(item_path) and not item.startswith("__"):
                 status = "disabled" if item.startswith("_") else "active"
                 base_name = item.lstrip("_")
-                
-                # 获取配置信息，如果没有则给默认值
                 p_meta = meta_data.get(base_name, {})
                 plugins_info.append({
                     "raw_name": item,
@@ -184,12 +165,10 @@ class ToggleRequest(BaseModel):
 
 @app.post("/api/plugins/toggle")
 async def toggle_plugin(req: ToggleRequest):
-    plugins_dir = os.path.join(os.getcwd(), "src", "plugins")
     base_name = req.raw_name.lstrip("_")
-    active_path = os.path.join(plugins_dir, base_name)
-    disabled_path = os.path.join(plugins_dir, f"_{base_name}")
+    active_path = os.path.join(PLUGIN_DIR, base_name)
+    disabled_path = os.path.join(PLUGIN_DIR, f"_{base_name}")
     
-    # 🛡️ 安全拦截：检查 plugins.json 是否允许禁用
     json_path = os.path.join(os.getcwd(), "plugins.json")
     if os.path.exists(json_path):
         with open(json_path, "r", encoding="utf-8") as f:
@@ -197,11 +176,10 @@ async def toggle_plugin(req: ToggleRequest):
             if meta_data.get(base_name, {}).get("can_disable") is False and req.target_status == "disabled":
                 return {"status": "error", "msg": f"核心限制：[{base_name}] 禁止被禁用！"}
                 
-    trigger_file = os.path.join(plugins_dir, "__init__.py")
+    trigger_file = os.path.join(PLUGIN_DIR, "__init__.py")
     def trigger_reload():
         if not os.path.exists(trigger_file):
-            with open(trigger_file, "w", encoding="utf-8") as f:
-                f.write("# Auto-generated to trigger reload\n")
+            with open(trigger_file, "w", encoding="utf-8") as f: f.write("# Auto-generated to trigger reload\n")
         os.utime(trigger_file, None)
 
     try:
@@ -223,11 +201,9 @@ class DeleteRequest(BaseModel):
 
 @app.post("/api/plugins/delete")
 async def delete_plugin(req: DeleteRequest):
-    plugins_dir = os.path.join(os.getcwd(), "src", "plugins")
-    target_path = os.path.join(plugins_dir, req.raw_name)
+    target_path = os.path.join(PLUGIN_DIR, req.raw_name)
     base_name = req.raw_name.lstrip("_")
     
-    # 🛡️ 安全拦截：检查 plugins.json 是否允许删除
     json_path = os.path.join(os.getcwd(), "plugins.json")
     if os.path.exists(json_path):
         with open(json_path, "r", encoding="utf-8") as f:
@@ -236,7 +212,7 @@ async def delete_plugin(req: DeleteRequest):
                 return {"status": "error", "msg": f"致命拦截：[{base_name}] 是受保护的底层资产，禁止物理销毁！"}
         
     def trigger_reload():
-        trigger_file = os.path.join(plugins_dir, "__init__.py")
+        trigger_file = os.path.join(PLUGIN_DIR, "__init__.py")
         os.utime(trigger_file, None)
 
     try:
@@ -251,7 +227,6 @@ async def delete_plugin(req: DeleteRequest):
 # ==================== ☁️ ZIP 热安装 API ====================
 @app.post("/api/plugins/upload")
 async def upload_plugin_zip(file: UploadFile = File(...)):
-    """接收 Zip 并直接解压到插件目录"""
     if not file.filename.endswith(".zip"):
         return {"status": "error", "msg": "只能上传 .zip 格式的安装包！"}
         
@@ -265,7 +240,6 @@ async def upload_plugin_zip(file: UploadFile = File(...)):
             
         os.remove(temp_zip)
         
-        # 🌟 安装插件后，顺手也戳醒一下框架
         env_path = os.path.join(os.getcwd(), ".env")
         if os.path.exists(env_path):
             os.utime(env_path, None)

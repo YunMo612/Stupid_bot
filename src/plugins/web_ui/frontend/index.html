@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>啥子UI</title>
+    <title>Stupid_UI</title>
     <link rel="icon" href="./icon/icon.png" type="image/png">
-    <link rel="stylesheet" href="./style.css">
+    
+    <script>document.write('<link rel="stylesheet" href="./style.css?t=' + new Date().getTime() + '">');</script>
 </head>
 <body class="dark-theme">
 
     <div class="glass-overlay"></div>
-    <div id="mobile-overlay" class="mobile-overlay" onclick="toggleMobileMenu()"></div>
+    <div id="mobile-overlay" class="mobile-overlay" onclick="window.toggleMobileMenu()"></div>
 
     <div id="sidebar" class="sidebar glass-panel" data-interactive="true">
         <div class="sidebar-header">
@@ -19,20 +20,20 @@
         </div>
         
         <ul class="menu">
-            <li class="menu-item active" onclick="switchTab('page-dashboard', this, '📊 基础信息')">📊 基础信息</li>
-           <li class="menu-item" onclick="switchTab('page-env', this, '🎛️ 环境配置')">🎛️ 环境配置</li>
-            <li class="menu-item" onclick="switchTab('page-plugins', this, '📦 插件管理')">📦 插件管理</li>
-            <li class="menu-item" onclick="switchTab('page-logs', this, '📝 神经日志')">📝 神经日志</li>
-            <li class="menu-item" onclick="switchTab('page-settings', this, '⚙️ 系统设置')">⚙️ 系统设置</li>
+            <li class="menu-item active" onclick="window.switchTab('page-dashboard', this, '📊 基础信息')">📊 基础信息</li>
+            <li class="menu-item" onclick="window.switchTab('page-env', this, '🎛️ 环境配置')">🎛️ 环境配置</li>
+            <li class="menu-item" onclick="window.switchTab('page-plugins', this, '📦 插件管理')">📦 插件管理</li>
+            <li class="menu-item" onclick="window.switchTab('page-logs', this, '📝 神经日志')">📝 神经日志</li>
+            <li class="menu-item" onclick="window.switchTab('page-settings', this, '⚙️ 系统设置')">⚙️ 系统设置</li>
         </ul>
     </div>
 
-    <button id="theme-btn" class="theme-float-btn glass-btn" onclick="toggleTheme(event)" title="切换主题">☀️</button>
+    <button id="theme-btn" class="theme-float-btn glass-btn" onclick="window.toggleTheme(event)" title="切换主题">☀️</button>
 
     <div class="main-content">
         <div class="topbar">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <button id="mobile-menu-btn" class="glass-btn" onclick="toggleMobileMenu()">☰</button>
+                <button id="mobile-menu-btn" class="glass-btn" onclick="window.toggleMobileMenu()">☰</button>
                 <h2 id="topbar-title" class="neon-text">📊 基础信息</h2>
             </div>
         </div>
@@ -42,8 +43,8 @@
                 <h3>系统诊断与连通性测试</h3>
                 <p class="text-muted">点击下方按钮探测框架状态或底层大模型连通性。</p>
                 <div class="btn-group-responsive" style="margin-bottom: 20px;">
-                    <button class="toggle-btn glass-btn" onclick="checkSystem()">探测中枢系统</button>
-                    <button class="toggle-btn glass-btn special-glow" onclick="checkAI()">PING 大模型节点</button>
+                    <button class="toggle-btn glass-btn" onclick="window.checkSystem()">探测中枢系统</button>
+                    <button class="toggle-btn glass-btn special-glow" onclick="window.checkAI()">PING 大模型节点</button>
                 </div>
                 <div id="status-box" class="console-box glass-panel-inner">等待指令输入...</div>
             </div>
@@ -53,7 +54,7 @@
             <div class="card glass-panel" data-interactive="true">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <h3 style="margin: 0;">🎛️ 全局核心环境变量</h3>
-                    <button class="glass-btn btn-outline" onclick="addNewEnvVar()">➕ 新增变量</button>
+                    <button class="glass-btn btn-outline" onclick="window.addNewEnvVar()">➕ 新增变量</button>
                 </div>
                 <p class="text-muted" style="margin-top: 10px;">可视化管理底层 .env 配置文件。修改将安全保留原文件内的注释，系统需重启后生效。</p>
                 
@@ -62,7 +63,7 @@
                 </div>
                 
                 <div class="btn-group-responsive align-center" style="margin-top: 25px;">
-                    <button id="btn-save-env" class="toggle-btn glass-btn special-glow" onclick="saveEnvConfig()">💾 保存配置到 .env</button>
+                    <button id="btn-save-env" class="toggle-btn glass-btn special-glow" onclick="window.saveEnvConfig()">💾 保存配置到 .env</button>
                     <span id="save-env-msg" style="font-weight: bold;"></span>
                 </div>
             </div>
@@ -89,8 +90,8 @@
                 <div class="log-header">
                     <span id="log-file-name" class="text-muted" style="font-family: 'Consolas', monospace; font-size: 0.85rem;">等待读取...</span>
                     <div class="btn-group-responsive">
-                        <button class="toggle-btn glass-btn" onclick="loadLogs()">重连管道</button>
-                        <button id="auto-scroll-btn" class="toggle-btn glass-btn" onclick="toggleAutoScroll()">自动滚动: 开启</button>
+                        <button class="toggle-btn glass-btn" onclick="window.loadLogs()">重连管道</button>
+                        <button id="auto-scroll-btn" class="toggle-btn glass-btn" onclick="window.toggleAutoScroll()">自动滚动: 开启</button>
                     </div>
                 </div>
                 <div id="log-console" class="terminal-box glass-panel-inner"></div>
@@ -106,7 +107,7 @@
                     <span>自定义背景壁纸 (自动莫奈取色)</span>
                     <div class="btn-group-responsive align-center">
                         <button class="toggle-btn glass-btn" onclick="document.getElementById('bg-upload').click()">上传本地图片</button>
-                        <button class="toggle-btn glass-btn btn-outline" onclick="resetBackground()">恢复默认</button>
+                        <button class="toggle-btn glass-btn btn-outline" onclick="window.resetBackground()">恢复默认</button>
                         <span id="bg-upload-msg" style="font-weight: bold; font-size: 0.9rem;"></span>
                     </div>
                     <input type="file" id="bg-upload" accept="image/*" style="display: none;">
@@ -120,7 +121,7 @@
                         <span class="text-muted" style="font-size:0.8rem; margin:0;">禁用后可大幅降低旧设备的 GPU 占用。</span>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" id="setting-anim" onchange="toggleSetting('anim', this.checked)" checked>
+                        <input type="checkbox" id="setting-anim" onchange="window.toggleSetting('anim', this.checked)" checked>
                         <span class="slider round"></span>
                     </label>
                 </div>
@@ -131,13 +132,26 @@
                         <span class="text-muted" style="font-size:0.8rem; margin:0;">禁用后将使用高对比度实体色块替换半透明面板。</span>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" id="setting-glass" onchange="toggleSetting('glass', this.checked)" checked>
+                        <input type="checkbox" id="setting-glass" onchange="window.toggleSetting('glass', this.checked)" checked>
                         <span class="slider round"></span>
                     </label>
                 </div>
             </div>
         </div>
 
+    </div>
+
+    <div id="delete-modal" class="modal-overlay">
+        <div class="modal-box glass-panel">
+            <div class="modal-icon" style="text-shadow: 0 0 20px #bf616a;">⚠️</div>
+            <h3 class="modal-title" style="text-shadow: 0 0 10px rgba(191,97,106,0.5);">严 重 警 告</h3>
+            <p class="modal-text">您即将物理删除模块：<br><strong id="delete-plugin-name"></strong></p>
+            <p class="modal-subtext">此操作不可逆，所有代码文件将从硬盘上永久抹除！</p>
+            <div class="modal-actions">
+                <button class="toggle-btn glass-btn" onclick="window.closeDeleteModal()">取消操作</button>
+                <button id="btn-confirm-plugin" class="delete-btn glass-btn-danger" disabled onclick="window.executeDelete()">🗑️ 确认销毁</button>
+            </div>
+        </div>
     </div>
 
     <div id="env-delete-modal" class="modal-overlay">
@@ -147,8 +161,8 @@
             <p class="modal-text">确定要永久删除环境变量：<br><strong id="env-delete-key" style="color: #bf616a; font-family: 'Consolas', monospace; font-size: 1.3rem;"></strong></p>
             <p class="modal-subtext">该操作可能导致依赖此变量的底层模块无法正常运行！</p>
             <div class="modal-actions">
-                <button class="toggle-btn glass-btn" onclick="closeEnvDeleteModal()">取消操作</button>
-                <button class="delete-btn glass-btn-danger" onclick="executeEnvDelete()">🗑️ 确认删除</button>
+                <button class="toggle-btn glass-btn" onclick="window.closeEnvDeleteModal()">取消操作</button>
+                <button id="btn-confirm-env" class="delete-btn glass-btn-danger" disabled onclick="window.executeEnvDelete()">🗑️ 确认删除</button>
             </div>
         </div>
     </div>
@@ -160,7 +174,6 @@
             <div class="input-group">
                 <label style="color: var(--text-muted); font-size: 0.85rem;">变量名 (KEY) - 支持自动补全</label>
                 <input type="text" id="new-env-key" class="glass-input code-font" placeholder="例如: SUPERUSERS" list="env-keys-list" autocomplete="off">
-                
                 <datalist id="env-keys-list">
                     <option value="HOST">
                     <option value="PORT">
@@ -180,12 +193,12 @@
             </div>
             
             <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;">
-                <button class="toggle-btn glass-btn" onclick="closeAddEnvModal()">取消</button>
-                <button class="toggle-btn glass-btn" style="border-color: #a3be8c; color: #a3be8c; background: rgba(163, 190, 140, 0.15);" onclick="confirmAddEnvVar()">确认添加</button>
+                <button class="toggle-btn glass-btn" onclick="window.closeAddEnvModal()">取消</button>
+                <button class="toggle-btn glass-btn" style="border-color: #a3be8c; color: #a3be8c; background: rgba(163, 190, 140, 0.15);" onclick="window.confirmAddEnvVar()">确认添加</button>
             </div>
         </div>
     </div>
     
-    <script src="./app.js"></script>
+    <script>document.write('<script src="./app.js?t=' + new Date().getTime() + '"><\/script>');</script>
 </body>
 </html>
