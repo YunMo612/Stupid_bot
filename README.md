@@ -17,7 +17,9 @@
 ---
  - [ ] FastAPI
  - [ ] WebUI完善
+ - - [ ] 完善material design样式
  - [ ] 完善readme
+ - [ ] AI语音功能（？？？）
 
 ---
 

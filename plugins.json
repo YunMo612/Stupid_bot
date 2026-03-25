@@ -1,0 +1,37 @@
+{
+  "web_ui": {
+    "name_zh": "Stupid 控制面板",
+    "description": "提供基于 Web 的现代化机器人后台管理与监控界面，已搭载全套 MD3 质感设计引擎与实时神经管道。",
+    "version": "v8.0 Meta",
+    "can_disable": false,
+    "can_delete": false
+  },
+  "common_core": {
+    "name_zh": "系统核心组件",
+    "description": "提供底层依赖支撑、定时任务调度以及跨组件公用函数库，维持整个框架的生命体征。",
+    "version": "v2.5.0",
+    "can_disable": false,
+    "can_delete": false
+  },
+  "group_admin": {
+    "name_zh": "群管与风控系统",
+    "description": "自动化群聊管家。包含入群欢迎、违禁词动态撤回、自动踢人与全局黑名单拦截网。",
+    "version": "v1.8.2",
+    "can_disable": true,
+    "can_delete": true
+  },
+  "prts_ai": {
+    "name_zh": "神经对话大模型",
+    "description": "接入本地/云端 LLM 引擎，赋予机器人多轮上下文理解、情感模拟与自然语言生成能力。",
+    "version": "v3.1.0",
+    "can_disable": true,
+    "can_delete": true
+  },
+  "message_logger": {
+    "name_zh": "消息寻迹记录仪",
+    "description": "将所有收发消息加密并持久化至本地数据库，提供数据回溯与上下文审计支持。",
+    "version": "v1.2",
+    "can_disable": true,
+    "can_delete": true
+  }
+}
