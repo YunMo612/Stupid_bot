@@ -23,7 +23,7 @@ async def device_chat_endpoint(req: DeviceRequest):
     llm_text = f"收到设备 {req.device_id} 的指令，这是测试回复。" # 替换为你真实的大模型调用
     
     # 2. 准备物理机 MeloTTS 的接口地址
-    tts_api_url = "http://192.168.95.55:8082/MeloTTS"  # 替换为真实地址
+    tts_api_url = "http://192.168.95.55:8082"  # 替换为真实地址
     tts_payload = {"text": llm_text, "language": "ZH"} # 根据你的 MeloTTS 接口文档调整
     
     # 3. 创建异步音频流生成器 (透传魔法)

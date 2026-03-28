@@ -49,7 +49,8 @@ body.dark-theme {
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body { 
-    font-family: 'Roboto', -apple-system, sans-serif; 
+    /* 🌟 修改全局字体为思源黑体 */
+    font-family: 'Noto Sans SC', 'Source Han Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; 
     color: var(--text-main); 
     display: flex; 
     height: 100vh; 
@@ -232,20 +233,18 @@ input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
     transition: transform 0.4s var(--md-sys-motion-easing); 
 }
 .sidebar-header { padding: 24px 24px 16px 24px; margin-bottom: 8px; }
-.menu { list-style: none; padding: 0 12px; }
-.menu-item { 
-    padding: 16px; 
-    margin-bottom: 4px; 
-    border-radius: 100px; /* MD3 胶囊选中态 */
-    cursor: pointer; 
-    color: var(--text-muted); 
-    font-weight: 500; 
-    transition: background 0.2s, color 0.2s; 
+/* 🌟 MD3 模式下隐藏独立弹性指示器 */
+.menu-indicator {
+    display: none !important;
 }
+
+.menu-item { padding: 16px; margin-bottom: 4px; border-radius: 100px; cursor: pointer; color: var(--text-muted); font-weight: 500; transition: background 0.2s, color 0.2s; position: relative; z-index: 1; }
 .menu-item:hover { background: rgba(var(--md-sys-color-primary-rgb), 0.08); color: var(--text-main); }
+
+/* 🌟 恢复 MD3 原生的静态胶囊高亮背景 */
 .menu-item.active { 
-    background: rgba(var(--md-sys-color-primary-rgb), 0.16); /* Secondary container */
-    color: var(--md-sys-color-primary); 
+    background: rgba(var(--md-sys-color-primary-rgb), 0.16) !important; 
+    color: var(--md-sys-color-primary) !important; 
     font-weight: 600; 
 }
 

@@ -3,7 +3,6 @@
 # ==============================================================================
 
 import os
-import re
 import zipfile
 import shutil
 import asyncio
@@ -23,11 +22,16 @@ __plugin_meta__ = PluginMetadata(
 
 app: FastAPI = nonebot.get_app()
 
-# 全局路径定义
-ROOT_DIR = os.getcwd()
+# ==================== 🌟 核心修复：绝对路径动态寻址 ====================
+# 彻底免疫任何终端运行目录(cwd)偏移导致的“文件找不到”问题
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+# 从 src/plugins/web_ui 往上退三级，强行锁定机器人根目录
+ROOT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "..", ".."))
+
 ENV_PATH = os.path.join(ROOT_DIR, ".env")
 PLUGIN_DIR = os.path.join(ROOT_DIR, "src", "plugins")
 PLUGINS_JSON_PATH = os.path.join(ROOT_DIR, "plugins.json")
+
 
 # ==================== 📊 系统与连通性 API ====================
 @app.get("/api/system/status")
@@ -36,7 +40,6 @@ async def get_system_status():
 
 @app.post("/api/ai/status")
 async def check_ai_status():
-    # 这里可以接入你实际的大模型 PING 逻辑
     return {"status": "success", "model": "Connected", "latency": "12ms"}
 
 
@@ -79,7 +82,6 @@ async def save_env_config(req: EnvConfig):
         else:
             output_lines.append(line)
 
-    # 追加新的环境变量
     for key, val in new_config.items():
         if key not in handled_keys:
             output_lines.append(f"{key}={val}\n")
@@ -95,9 +97,8 @@ async def save_env_config(req: EnvConfig):
 # ==================== 📦 插件列表与元数据 API ====================
 @app.get("/api/plugins")
 async def get_plugins():
-    """读取实际文件夹，并结合 plugins.json 返回完整的元数据"""
+    """精准读取物理文件夹，并结合 plugins.json 返回完整的元数据"""
     meta_data = {}
-    # 1. 尝试读取 plugins.json
     if os.path.exists(PLUGINS_JSON_PATH):
         try:
             with open(PLUGINS_JSON_PATH, "r", encoding="utf-8") as f:
@@ -106,26 +107,24 @@ async def get_plugins():
             print(f"[WebUI] 读取 plugins.json 失败: {e}")
 
     plugins_info = []
-    # 2. 遍历实际的插件目录
     if os.path.exists(PLUGIN_DIR):
         for item in os.listdir(PLUGIN_DIR):
             item_path = os.path.join(PLUGIN_DIR, item)
-            # 过滤掉 __pycache__ 等隐藏文件夹，只处理普通文件夹
+            # 过滤掉缓存与隐藏文件夹
             if os.path.isdir(item_path) and not item.startswith("__"):
                 status = "disabled" if item.startswith("_") else "active"
                 base_name = item.lstrip("_")
                 
-                # 3. 匹配 JSON 元数据，如果找不到则使用安全的默认值 (防御性编程)
                 p_meta = meta_data.get(base_name, {})
                 plugins_info.append({
                     "raw_name": item,
                     "name": base_name,
                     "status": status,
-                    "name_zh": p_meta.get("name_zh", base_name), # 找不到就用原英文名
-                    "description": p_meta.get("description", "暂无模块描述信息。"), # 绝对不返回 undefined
+                    "name_zh": p_meta.get("name_zh", base_name), 
+                    "description": p_meta.get("description", "暂无模块描述信息。"), 
                     "version": p_meta.get("version", "v1.0.0"),
-                    "can_disable": p_meta.get("can_disable", True), # 默认允许禁用
-                    "can_delete": p_meta.get("can_delete", True)    # 默认允许删除
+                    "can_disable": p_meta.get("can_disable", True), 
+                    "can_delete": p_meta.get("can_delete", True)    
                 })
                 
     return {"plugins": plugins_info}
@@ -142,14 +141,12 @@ async def toggle_plugin(req: ToggleRequest):
     active_path = os.path.join(PLUGIN_DIR, base_name)
     disabled_path = os.path.join(PLUGIN_DIR, f"_{base_name}")
     
-    # 二次校验核心锁
     if os.path.exists(PLUGINS_JSON_PATH):
         with open(PLUGINS_JSON_PATH, "r", encoding="utf-8") as f:
             meta_data = json.load(f)
             if meta_data.get(base_name, {}).get("can_disable") is False and req.target_status == "disabled":
                 return {"status": "error", "msg": f"核心限制：[{base_name}] 禁止被禁用！"}
                 
-    # 触发热重载的黑科技：修改父目录的 __init__.py 时间戳
     def trigger_reload():
         trigger_file = os.path.join(PLUGIN_DIR, "__init__.py")
         if not os.path.exists(trigger_file):
@@ -179,7 +176,6 @@ async def delete_plugin(req: DeleteRequest):
     target_path = os.path.join(PLUGIN_DIR, req.raw_name)
     base_name = req.raw_name.lstrip("_")
     
-    # 二次校验物理销毁锁
     if os.path.exists(PLUGINS_JSON_PATH):
         with open(PLUGINS_JSON_PATH, "r", encoding="utf-8") as f:
             meta_data = json.load(f)
@@ -216,8 +212,6 @@ async def upload_plugin_zip(file: UploadFile = File(...)):
             zip_ref.extractall(PLUGIN_DIR)
             
         os.remove(temp_zip)
-        
-        # 顺便触摸一下 .env 尝试触发全量重载
         if os.path.exists(ENV_PATH):
             os.utime(ENV_PATH, None)
             
@@ -240,7 +234,6 @@ async def websocket_logs(websocket: WebSocket):
                 await asyncio.sleep(1)
                 continue
             
-            # Nonebot2 默认按日期生成文件夹，找最新的文件夹
             folders = sorted([f for f in os.listdir(log_dir) if os.path.isdir(os.path.join(log_dir, f))], reverse=True)
             if not folders:
                 await asyncio.sleep(1)
@@ -259,10 +252,8 @@ async def websocket_logs(websocket: WebSocket):
                 try:
                     with open(latest_file, "r", encoding="utf-8") as f:
                         lines = f.readlines()
-                        # 读取最后 300 行
                         logs = "".join(lines[-300:])
                     
-                    # 过滤掉烦人的前端自身请求轮询日志
                     filtered_logs = "\n".join([line for line in logs.split("\n") if "GET /api/" not in line and "GET /ui" not in line])
                     await websocket.send_json({"status": "success", "logs": filtered_logs, "file": f"{folders[0]}/{files[0]}"})
                     last_mtime = current_mtime
@@ -273,8 +264,8 @@ async def websocket_logs(websocket: WebSocket):
         pass
 
 
-# ==================== 🖥️ 静态文件挂载 (必须放在最后) ====================
-FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
+# ==================== 🖥️ 静态文件挂载 ====================
+FRONTEND_DIR = os.path.join(CURRENT_DIR, "frontend")
 if os.path.exists(FRONTEND_DIR):
     app.mount("/ui", StaticFiles(directory=FRONTEND_DIR, html=True), name="web_frontend")
 else:

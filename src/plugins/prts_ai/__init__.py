@@ -7,6 +7,7 @@ from nonebot import on_command, logger
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent, GroupMessageEvent, Message
 from nonebot.params import CommandArg
 from nonebot.exception import FinishedException
+from . import voice_handler
 
 # 1. 导入公共工具箱
 from ..common_core import env_config, get_data

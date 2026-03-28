@@ -1,6 +1,6 @@
 # <center>🤪 Stupid_Bot 🤪
 ### <center>一个成分复杂的QQbot
-### <center> ⚠️使用Vibe Coding⚠️ </center>
+### <center> ⚠️提示：本项目部分使用Vibe Coding </center>
 
 ---
 
@@ -15,11 +15,66 @@
 基于 **NoneBot2** 与 **FastAPI** 构建的现代化、模块化 QQ 机器人控制框架。不仅拥有强大的 AI 中枢与群管基建，更自带一个支持**前后端分离、动态配置修改、ZIP 拖拽热更新**的独立可视化 Web 控制台。
 
 ---
- - [ ] FastAPI
- - [ ] WebUI完善
- - - [ ] 完善material design样式
- - [ ] 完善readme
- - [ ] AI语音功能（？？？）
+
+## 🚀 快速开始
+
+### 环境要求
+
+- **Python 3.9+**
+- **Git**
+- **Linux/macOS** 或 Windows（推荐 WSL2）
+
+### 一键启动
+
+```bash
+# 克隆项目
+git clone https://github.com/YunMo612/Stupid_bot.git stupid_bot && cd stupid_bot/mybot
+
+# 创建虚拟环境并激活
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# 安装依赖
+pip install -r requirements.txt -q
+```
+
+### 配置机器人
+
+在项目根目录创建或编辑 `.env` 文件，填写以下**必填项**：
+
+```env
+# === 必填：QQ 机器人配置 ===
+SUPERUSERS=["你的QQ号"]
+NICKNAME=["PRTS", "bot"]
+
+# === 必填：LLM API 配置 ===
+# 二选一：本地 Llama 或自建 API 路由
+LLAMA_SERVER_URL="http://127.0.0.1:8000/v1/chat/completions"
+# ROUTER_URL="http://your-api:port/v1/chat/completions"
+
+# === 可选 ===
+HOST=0.0.0.0
+PORT=8080
+COMMAND_START=["/", ""]
+RELOAD=true  # 开启后支持 WebUI 插件热插拔
+```
+
+### 启动机器人
+
+```bash
+# 前台运行
+nb run --reload
+
+# 后台运行（使用 screen）
+screen -S bot
+source .venv/bin/activate
+nb run --reload
+# 按 Ctrl+A+D 挂起窗口
+```
+
+访问 `http://localhost:8080` 打开 WebUI 控制台
+
+💡 其余配置项启动后可通过 **WebUI 控制台** 动态修改。
 
 ---
 
@@ -56,57 +111,38 @@ Stupid_Bot/
                 └── app.js
 ```
 
-## 🚀 部署指南 (Quick Start)
+## 📖 开发指南
 
-### 1. 环境准备
-请确保你的服务器或本地电脑已安装以下环境：
-* **Python 3.9** 或更高版本
-* **Git** (用于拉取代码)
+### 创建插件
 
-### 2. 克隆项目与安装依赖
-首先，将本项目克隆到你的本地/服务器中：
+在 `src/plugins/` 下新建插件目录，参考 `group_admin/` 结构即可。
+
+### 配置 LLM
+
+编辑 `ai_config.json` 和 `ai_prompt.json` 自定义 AI 人设与行为。
+
+### 使用 WebUI
+
+启动后访问 `http://localhost:8080`（默认），可视化管理插件、查看日志、修改配置。
+
+## 常见命令
+
 ```bash
-git clone [https://github.com/你的用户名/Stupid_bot.git](https://github.com/你的用户名/Stupid_bot.git)
-cd Stupid_bot
+# 查看 NoneBot 帮助
+nb -h
+
+# 查看实时日志
+tail -f logs/$(date +%Y-%m-%d)/*.log
+
+# 安装特定插件
+nb plugin install <插件名>
 ```
 
-### 3.创建虚拟环境
-```bash
-python -m venv .venv
-```
-#### 激活虚拟环境 (Linux / macOS)
-```bash
-source .venv/bin/activate
-```
-#### 激活虚拟环境 (Windows CMD)
-```bash
-.venv\Scripts\activate
-```
-### 4.安装 NoneBot2 运行所需的所有依赖
-```bash
-pip install -r requirements.txt
-```
-### 环境配置 (.env)
+## 📝 License
 
-#### 在项目根目录创建或修改 .env 文件。以下是基础配置模板：
-```text
-HOST=0.0.0.0
-PORT=8080
-SUPERUSERS=["你的QQ号"]
-NICKNAME=["PRTS", "bot"]
-COMMAND_START=["/", ""]
+MIT License - 自由使用与修改
 
-# 大模型 API 路由配置 (可直接在 WebUI 中动态修改)
-LLAMA_SERVER_URL="http://你的大模型IP:端口/v1/chat/completions"
-ROUTER_URL="http://你的路由IP:端口/v1/chat/completions"
+---
 
-# 开启热重载 (重要：WebUI 的插件热插拔及拖拽安装极度依赖此项配置)
-RELOAD=true
-```
-## 5.启动Bot
-```bash
-screen -S bot
-screen -x bot
-cd mybot
-nb run --reload
-```
+**有问题？** 欢迎提交 Issue
+

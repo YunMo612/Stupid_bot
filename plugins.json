@@ -15,7 +15,7 @@
   },
   "group_admin": {
     "name_zh": "群管与风控系统",
-    "description": "自动化群聊管家。包含入群欢迎、违禁词动态撤回、自动踢人与全局黑名单拦截网。",
+    "description": "自动化群聊管家。包含入群欢迎、管理员指令、帮助菜单",
     "version": "v1.8.2",
     "can_disable": true,
     "can_delete": true
@@ -29,7 +29,7 @@
   },
   "message_logger": {
     "name_zh": "消息寻迹记录仪",
-    "description": "将所有收发消息加密并持久化至本地数据库，提供数据回溯与上下文审计支持。",
+    "description": "负责将日志保存到本地",
     "version": "v1.2",
     "can_disable": true,
     "can_delete": true
