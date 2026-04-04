@@ -3,17 +3,28 @@
 # ==============================================================================
 
 import re
-from nonebot import on_command, logger
+from nonebot import on_command, logger, get_driver
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent, GroupMessageEvent, Message
 from nonebot.params import CommandArg
 from nonebot.exception import FinishedException
-from . import voice_handler
 
 # 1. 导入公共工具箱
 from ..common_core import env_config, get_data
 
-# 2. 导入 AI 业务服务层
+# 2. 导入 AI 业务服务层与数据库层
 from .llm_service import process_ai_request, clear_memory
+from .database import init_db_pool, close_db_pool
+from . import voice_handler
+
+driver = get_driver()
+
+@driver.on_startup
+async def startup():
+    await init_db_pool()
+
+@driver.on_shutdown
+async def shutdown():
+    await close_db_pool()
 
 # 🌟 修复区：彻底移除了 to_me，设置了优先级，确保只要开头是 /ai 绝对拦截
 ai_matcher = on_command("ai", aliases={"问问", "大模型", "聊天", "看看"}, priority=2, block=True)
@@ -79,7 +90,7 @@ async def handle_ai_entry(bot: Bot, event: MessageEvent, args: Message = Command
         if qq_id not in (admins | devs | superusers):
             await ai_matcher.finish("⛔ 权限不足！")
             
-        clear_memory(session_id)
+        await clear_memory(qq_id, session_id) # 修改为 await 异步调用
         await ai_matcher.finish("✨ 我的短期记忆已强制清空！")
 
     # 步骤 4：提取多模态附件 (图片, 文件, 转发)
@@ -134,5 +145,4 @@ async def handle_ai_entry(bot: Bot, event: MessageEvent, args: Message = Command
         logger.error(f"AI 调度服务异常: {e}")
         await ai_matcher.finish(f"🔴 AI 核心异常：{str(e)}")
 
-# 🌟 修复区：暂时注释掉 web_api 的加载，防止它缺少环境导致连环崩溃
 # from . import web_api
