@@ -93,10 +93,11 @@ async def process_ai_request(
                     file_text += f"\n\n<uploaded_file name='{file_info.get('file_name', 'log.txt')}'>\n{clean_mc_log(text)}\n</uploaded_file>\n"
             except Exception as e: logger.error(f"文件读取失败: {e}")
 
+    # 🌟 新增功能：启动 Gemma 3.0 的提示
     if image_urls and not file_ids and not forward_ids:
-        await matcher.send("🖼️ 正在接通主视觉中枢...")
+        await matcher.send("🖼️ 正在接通主视觉中枢，启动Gemma3.0...")
     elif not file_ids and not forward_ids:
-        pass # 去掉了闲聊时的发送提示，更加清爽
+        await matcher.send("🚀 正在启动Gemma3.0...")
 
     # 2. 路由意图识别 (Qwen 0.5B 负责判断温度)
     config = load_ai_config()
@@ -188,7 +189,9 @@ async def process_ai_request(
                 # 🌟 核心：将玩家提问和 AI 回复存入 MariaDB
                 history_q = f"[引用: {reply_text[:20]}...] {raw_prompt}" if reply_text else (raw_prompt or "[附件]")
                 await save_message_to_db(hashed_uid, "user", history_q)
-                await save_message_to_db(hashed_uid, "ai", ai_reply)
+                
+                # 👇 关键修复点：使用 "assistant" 替代 "ai"，解决 500 报错！
+                await save_message_to_db(hashed_uid, "assistant", ai_reply)
 
                 # 8. 动态发送策略
                 if mode == "chat" and not force_forward:
