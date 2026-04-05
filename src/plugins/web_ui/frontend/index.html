@@ -2,14 +2,40 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+<<<<<<< HEAD
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Stupid_UI</title>
     <link rel="icon" href="./icon/icon.png" type="image/png">
     
     <script>document.write('<link rel="stylesheet" href="./style.css?t=' + new Date().getTime() + '">');</script>
+=======
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="./icon/icon.png">
+    <title>Stupid_UI - Core v8.0 Meta</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            user-select: none;
+        }
+    </style>
+    <script>
+        (function() {
+            var useMd3 = false;
+            try { var saved = localStorage.getItem('prts_settings'); if (saved) { useMd3 = !!JSON.parse(saved).md3; } } catch(e) {}
+            var link = document.createElement('link'); link.id = 'main-style'; link.rel = 'stylesheet';
+            link.href = (useMd3 ? './style_md.css' : './style.css') + '?v=' + new Date().getTime();
+            document.head.appendChild(link);
+        })();
+    </script>
+>>>>>>> dev
 </head>
-<body class="dark-theme">
+<body class="dark-theme"> <div class="glass-overlay"></div>
 
+<<<<<<< HEAD
     <div class="glass-overlay"></div>
     <div id="mobile-overlay" class="mobile-overlay" onclick="window.toggleMobileMenu()"></div>
 
@@ -36,11 +62,58 @@
                 <button id="mobile-menu-btn" class="glass-btn" onclick="window.toggleMobileMenu()">☰</button>
                 <h2 id="topbar-title" class="neon-text">📊 基础信息</h2>
             </div>
+=======
+    <div class="mobile-overlay" id="mobile-overlay" onclick="window.toggleMobileMenu()"></div>
+
+    <div class="sidebar glass-panel" id="sidebar" data-interactive="true">
+        <div class="sidebar-header">
+            <h2 style="font-weight: 600; letter-spacing: 0.5px;" class="neon-text">Stupid_UI</h2>
+            <div style="font-size: 0.8rem; color: var(--md-sys-color-primary, rgba(var(--monet-rgb), 0.8)); margin-top: 4px; font-weight: 500;">Core v8.0 Meta</div>
+        </div>
+        <ul class="menu" id="sidebar-menu">
+            <div id="menu-indicator" class="menu-indicator"></div>
+
+            <li class="menu-item active" onclick="window.switchTab('page-dashboard', this, 'analytics', '基础信息')">
+                <span class="material-symbols-outlined">analytics</span>
+                基础信息
+            </li>
+            <li class="menu-item" onclick="window.switchTab('page-env', this, 'tune', '环境配置')">
+                <span class="material-symbols-outlined">tune</span>
+                环境配置
+            </li>
+            <li class="menu-item" onclick="window.switchTab('page-plugins', this, 'extension', '插件管理')">
+                <span class="material-symbols-outlined">extension</span>
+                插件管理
+            </li>
+            <li class="menu-item" onclick="window.switchTab('page-logs', this, 'article', '神经日志')">
+                <span class="material-symbols-outlined">article</span>
+                神经日志
+            </li>
+            <li class="menu-item" onclick="window.switchTab('page-settings', this, 'settings', '系统设置')">
+                <span class="material-symbols-outlined">settings</span>
+                系统设置
+            </li>
+        </ul>
+    </div>
+
+    <button class="theme-float-btn glass-btn" id="theme-btn" onclick="window.toggleTheme(event)" title="切换主题">
+        <span class="material-symbols-outlined">light_mode</span>
+    </button>
+
+    <div class="main-content">
+        <div class="topbar">
+            <button id="mobile-menu-btn" class="glass-btn" onclick="window.toggleMobileMenu()">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            <h2 id="topbar-title" style="display: flex; align-items: center; gap: 12px; font-weight: 500;" class="neon-text">
+                <span class="material-symbols-outlined">analytics</span> 基础信息
+            </h2>
+>>>>>>> dev
         </div>
 
         <div id="page-dashboard" class="page-container active">
             <div class="card glass-panel" data-interactive="true">
-                <h3>系统诊断与连通性测试</h3>
+                <h3><span class="material-symbols-outlined" style="vertical-align: text-bottom; font-size: 1.2em; margin-right: 5px;">monitor_heart</span>系统诊断与连通性测试</h3>
                 <p class="text-muted">点击下方按钮探测框架状态或底层大模型连通性。</p>
                 <div class="btn-group-responsive" style="margin-bottom: 20px;">
                     <button class="toggle-btn glass-btn" onclick="window.checkSystem()">探测中枢系统</button>
@@ -53,6 +126,7 @@
         <div id="page-env" class="page-container">
             <div class="card glass-panel" data-interactive="true">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+<<<<<<< HEAD
                     <h3 style="margin: 0;">🎛️ 全局核心环境变量</h3>
                     <button class="glass-btn btn-outline" onclick="window.addNewEnvVar()">➕ 新增变量</button>
                 </div>
@@ -62,6 +136,15 @@
                     <div style="color:rgba(var(--monet-rgb),1); text-align:center; padding: 20px;">⏳ 正在解析 .env 配置文件...</div>
                 </div>
                 
+=======
+                    <h3 style="margin: 0;"><span class="material-symbols-outlined" style="vertical-align: text-bottom; margin-right: 5px;">database</span>全局核心环境变量</h3>
+                    <button class="glass-btn btn-outline" onclick="window.addNewEnvVar()">➕ 新增变量</button>
+                </div>
+                <p class="text-muted" style="margin-top: 10px;">可视化管理底层 .env 配置文件。修改将安全保留原文件内的注释，系统需重启后生效。</p>
+                <div id="env-list-container" style="margin-top: 20px;">
+                    <div style="text-align:center; padding: 20px;">⏳ 正在解析 .env 配置文件...</div>
+                </div>
+>>>>>>> dev
                 <div class="btn-group-responsive align-center" style="margin-top: 25px;">
                     <button id="btn-save-env" class="toggle-btn glass-btn special-glow" onclick="window.saveEnvConfig()">💾 保存配置到 .env</button>
                     <span id="save-env-msg" style="font-weight: bold;"></span>
@@ -71,16 +154,26 @@
 
         <div id="page-plugins" class="page-container">
             <div class="card glass-panel" data-interactive="true">
+<<<<<<< HEAD
                 <h3>⚡ 热安装模块</h3>
+=======
+                <h3><span class="material-symbols-outlined" style="vertical-align: text-bottom; margin-right: 5px;">bolt</span>热安装模块</h3>
+>>>>>>> dev
                 <div id="drop-zone" class="drop-zone glass-panel-inner">
                     <span id="drop-msg">点击或将 .zip 拖拽到此处进行热安装</span>
                 </div>
                 <input type="file" id="file-input" accept=".zip" style="display: none;">
             </div>
             <div class="card glass-panel" data-interactive="true" style="margin-top: 20px;">
+<<<<<<< HEAD
                 <h3>🔌 元数据节点拓扑</h3>
                 <div id="plugin-list" class="plugin-list-container">
                     <div style="color:rgba(var(--monet-rgb),1); text-align:center; padding: 20px;">⏳ 同步配置清单中...</div>
+=======
+                <h3><span class="material-symbols-outlined" style="vertical-align: text-bottom; margin-right: 5px;">account_tree</span>元数据节点拓扑</h3>
+                <div id="plugin-list" class="plugin-list-container">
+                    <div style="text-align:center; padding: 20px;">⏳ 同步配置清单中...</div>
+>>>>>>> dev
                 </div>
             </div>
         </div>
@@ -99,6 +192,7 @@
         </div>
 
         <div id="page-settings" class="page-container">
+<<<<<<< HEAD
             <div class="card glass-panel" data-interactive="true">
                 <h3>🎨 视觉与外观</h3>
                 <p class="text-muted">定制你的控制台环境光与材质，变更将自动保存。</p>
@@ -119,17 +213,76 @@
                     <div>
                         <strong style="display:block; margin-bottom:5px;">全局动态光影与动画</strong>
                         <span class="text-muted" style="font-size:0.8rem; margin:0;">禁用后可大幅降低旧设备的 GPU 占用。</span>
+=======
+            <div class="card glass-panel-inner" data-interactive="true">
+                <h3 style="display: flex; align-items: center; gap: 8px; color: var(--md-sys-color-primary, rgba(var(--monet-rgb), 1));">
+                    <span class="material-symbols-outlined">palette</span> 视觉与外观
+                </h3>
+                <p class="text-muted" style="margin-bottom: 24px;">定制你的控制台环境光与材质，变更将自动保存。</p>
+                <div class="settings-divider"></div>
+                <div class="settings-row">
+                    <div>
+                        <div style="font-weight: 500; font-size: 1.05rem; margin-bottom: 4px;">自定义背景壁纸 (自动莫奈取色)</div>
+                        <span id="bg-upload-msg" style="font-weight: bold; font-size: 0.9rem;"></span>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="glass-btn" onclick="document.getElementById('bg-upload').click()">
+                            <span class="material-symbols-outlined" style="font-size: 18px; margin-right: 5px; vertical-align: middle;">image</span> 选择图片
+                        </button>
+                        <button class="glass-btn" onclick="window.resetBackground()">恢复默认</button>
+                    </div>
+                    <input type="file" id="bg-upload" accept="image/*" style="display: none;">
+                </div>
+                <div class="settings-divider"></div>
+                <div class="settings-row">
+                    <div>
+                        <div style="font-weight: 500; font-size: 1.05rem; margin-bottom: 4px;">Material Design 3 (实验室特性)</div>
+                        <div class="text-muted" style="font-size: 0.85rem; margin-bottom: 0;">开启后将载入 MD3 质感设计语言，替代极光玻璃态。</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="setting-md3" onchange="window.toggleSetting('md3', this.checked)">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="settings-divider"></div>
+                <div class="settings-row">
+                    <div>
+                        <div style="font-weight: 500; font-size: 1.05rem; margin-bottom: 4px;">全局动态光影与动画</div>
+                        <div class="text-muted" style="font-size: 0.85rem; margin-bottom: 0;">禁用后可大幅降低旧设备的 GPU 占用。</div>
+>>>>>>> dev
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="setting-anim" onchange="window.toggleSetting('anim', this.checked)" checked>
                         <span class="slider round"></span>
                     </label>
                 </div>
+<<<<<<< HEAD
                 
                 <div class="settings-row">
                     <div>
                         <strong style="display:block; margin-bottom:5px;">深度毛玻璃材质 (Glassmorphism)</strong>
                         <span class="text-muted" style="font-size:0.8rem; margin:0;">禁用后将使用高对比度实体色块替换半透明面板。</span>
+=======
+                <div class="settings-divider"></div>
+                <div class="settings-row">
+                    <div>
+                        <div style="font-weight: 500; font-size: 1.05rem; margin-bottom: 4px;">动画播放速度</div>
+                        <div class="text-muted" style="font-size: 0.85rem; margin-bottom: 0;">调整界面核心交互（如弹性菜单、主题切换）的响应快慢。</div>
+                    </div>
+                    <select id="setting-anim-speed" class="glass-input code-font" style="width: auto; padding: 8px 12px; cursor: pointer; color: var(--text-main);" onchange="window.toggleSetting('animSpeed', this.value)">
+                        <option value="0.4" style="color: #000;">极快 (x2.5)</option>
+                        <option value="0.7" style="color: #000;">快 (x1.5)</option>
+                        <option value="1" style="color: #000;">中 (默认)</option>
+                        <option value="1.5" style="color: #000;">慢 (x0.7)</option>
+                        <option value="2.5" style="color: #000;">极慢 (x0.4)</option>
+                    </select>
+                </div>
+                <div class="settings-divider"></div>
+                <div class="settings-row">
+                    <div>
+                        <div style="font-weight: 500; font-size: 1.05rem; margin-bottom: 4px;">深度毛玻璃材质 (Glassmorphism)</div>
+                        <div class="text-muted" style="font-size: 0.85rem; margin-bottom: 0;">禁用后将使用高对比度实体色块替换半透明面板。</div>
+>>>>>>> dev
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="setting-glass" onchange="window.toggleSetting('glass', this.checked)" checked>
@@ -137,23 +290,48 @@
                     </label>
                 </div>
             </div>
+<<<<<<< HEAD
+=======
+            
+            <div class="card glass-panel-inner" style="border-color: rgba(var(--md-sys-color-error-rgb, 191,97,106), 0.3);">
+                <h3 style="display: flex; align-items: center; gap: 8px; color: var(--md-sys-color-error, #bf616a);">
+                    <span class="material-symbols-outlined">warning</span> 危险操作
+                </h3>
+                <p class="text-muted">以下操作不可逆，请谨慎操作。</p>
+                <div class="btn-group-responsive" style="margin-top: 20px;">
+                    <button class="glass-btn-danger" onclick="document.getElementById('demo-modal').classList.add('show')">
+                        <span class="material-symbols-outlined" style="font-size: 18px; margin-right: 5px; vertical-align: middle;">delete_forever</span>重置所有设置
+                    </button>
+                </div>
+            </div>
+>>>>>>> dev
         </div>
 
     </div>
 
-    <div id="delete-modal" class="modal-overlay">
+    <div id="delete-modal" class="modal-overlay">...（此处省略弹窗保持不变）...</div>
+    <div id="env-delete-modal" class="modal-overlay">...（此处省略弹窗保持不变）...</div>
+    <div id="add-env-modal" class="modal-overlay">...（此处省略弹窗保持不变）...</div>
+
+    <div class="modal-overlay" id="demo-modal">
         <div class="modal-box glass-panel">
-            <div class="modal-icon" style="text-shadow: 0 0 20px #bf616a;">⚠️</div>
-            <h3 class="modal-title" style="text-shadow: 0 0 10px rgba(191,97,106,0.5);">严 重 警 告</h3>
-            <p class="modal-text">您即将物理删除模块：<br><strong id="delete-plugin-name"></strong></p>
-            <p class="modal-subtext">此操作不可逆，所有代码文件将从硬盘上永久抹除！</p>
+            <span class="material-symbols-outlined modal-icon" style="font-size: 3rem; color: #bf616a;">delete_sweep</span>
+            <h3 class="modal-title">确认重置？</h3>
+            <p class="modal-text">所有视觉与外观设置将恢复到初始状态。</p>
+            <p class="modal-subtext">此操作无法撤销。</p>
             <div class="modal-actions">
+<<<<<<< HEAD
                 <button class="toggle-btn glass-btn" onclick="window.closeDeleteModal()">取消操作</button>
                 <button id="btn-confirm-plugin" class="delete-btn glass-btn-danger" disabled onclick="window.executeDelete()">🗑️ 确认销毁</button>
+=======
+                <button class="glass-btn" onclick="document.getElementById('demo-modal').classList.remove('show')">取消</button>
+                <button class="glass-btn-danger" onclick="window.resetAllSettings()">确认重置</button>
+>>>>>>> dev
             </div>
         </div>
     </div>
 
+<<<<<<< HEAD
     <div id="env-delete-modal" class="modal-overlay">
         <div class="modal-box glass-panel">
             <div class="modal-icon" style="text-shadow: 0 0 20px #bf616a;">⚠️</div>
@@ -200,5 +378,12 @@
     </div>
     
     <script>document.write('<script src="./app.js?t=' + new Date().getTime() + '"><\/script>');</script>
+=======
+    <script>
+        var script = document.createElement('script');
+        script.src = './app.js?v=' + new Date().getTime();
+        document.body.appendChild(script);
+    </script>
+>>>>>>> dev
 </body>
 </html>

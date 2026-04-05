@@ -1,5 +1,5 @@
 # ==============================================================================
-# 大模型 API 请求与调度核心 (LLM Service)
+# 大模型 API 请求与调度核心 (LLM Service) - 适配全自动 MariaDB 版
 # ==============================================================================
 
 import re
@@ -10,13 +10,20 @@ import asyncio
 import aiohttp
 from datetime import datetime
 from nonebot import logger
-from nonebot.adapters.onebot.v11 import Bot, MessageEvent, GroupMessageEvent, Message
+from nonebot.adapters.onebot.v11 import Bot, MessageEvent, Message
 
-# 💡 魔法引入：基建配置 和 我们刚写的人设配置
+# 💡 魔法引入：基建配置 和 人设配置
 from ..common_core import env_config
 from .persona import load_ai_config, load_personas
 
-AI_CHAT_HISTORY = {}
+# 🌟 引入刚写好的数据库模块 (使用哈希 UID 与 MySQL 进行交互)
+from .database import get_hashed_uid, fetch_chat_history_from_db, save_message_to_db, clear_memory_in_db
+
+# 动态读取大模型节点配置 (从 .env 中安全读取)
+LLAMA_SERVER_URL = getattr(env_config, "llama_server_url", "http://127.0.0.1:8080/v1/chat/completions")
+ROUTER_URL = getattr(env_config, "router_url", "http://127.0.0.1:8081/v1/chat/completions")
+
+# 仅保留人设状态字典（随生命周期重置即可，无需持久化）
 AI_PERSONA_STATE = {}
 MAX_HISTORY_ROUNDS = 5
 
@@ -34,10 +41,12 @@ def clean_mc_log(log_text: str, max_length: int = 800) -> str:
         return core_log[:max_length] + "\n\n...[PRTS: 报错折叠]..." if len(core_log) > max_length else core_log
     return f"{log_text[:max_length//2]}\n...[过滤]...\n{log_text[-max_length//2:]}" if len(log_text) > max_length else log_text
 
-def clear_memory(session_id: str):
-    """强制清除短期记忆"""
-    if session_id in AI_CHAT_HISTORY: del AI_CHAT_HISTORY[session_id]
-    if session_id in AI_PERSONA_STATE: del AI_PERSONA_STATE[session_id]
+async def clear_memory(qq_id: str, session_id: str):
+    """强制清除短期记忆 (同步清理 MariaDB 与内存中状态)"""
+    hashed_uid = get_hashed_uid(qq_id)
+    await clear_memory_in_db(hashed_uid)  # 清理 MariaDB 中的历史
+    if session_id in AI_PERSONA_STATE: 
+        del AI_PERSONA_STATE[session_id]
 
 async def process_ai_request(
     bot: Bot, event: MessageEvent, matcher,
@@ -48,6 +57,8 @@ async def process_ai_request(
 ):
     prompt = clean_mc_log(raw_prompt)
     file_text = ""
+    # 计算当前用户的隔离 UID
+    hashed_uid = get_hashed_uid(qq_id)
 
     # 1. 提取合并转发与文件
     if forward_ids:
@@ -82,12 +93,13 @@ async def process_ai_request(
                     file_text += f"\n\n<uploaded_file name='{file_info.get('file_name', 'log.txt')}'>\n{clean_mc_log(text)}\n</uploaded_file>\n"
             except Exception as e: logger.error(f"文件读取失败: {e}")
 
+    # 🌟 新增功能：启动 Gemma 3.0 的提示
     if image_urls and not file_ids and not forward_ids:
-        await matcher.send("🖼️ 正在接通主视觉中枢...")
+        await matcher.send("🖼️ 正在接通主视觉中枢，启动Gemma3.0...")
     elif not file_ids and not forward_ids:
-        await matcher.send("🤔 正在连接主脑...")
+        await matcher.send("🚀 正在启动Gemma3.0...")
 
-    # 2. 路由意图识别 (Qwen 0.5B)
+    # 2. 路由意图识别 (Qwen 0.5B 负责判断温度)
     config = load_ai_config()
     priestess_prob = float(config["persona_settings"].get("priestess_probability", 0.3))
     chat_threshold = float(config["persona_settings"].get("chat_temp_threshold", 0.4))
@@ -97,7 +109,7 @@ async def process_ai_request(
         router_sys = "你是一个专业推荐系统。评估输入推荐temperature(浮点数): 硬核代码/排错 0.1, 翻译 0.3, 日常 0.5, 闲聊发癫 0.9。只回复数字！"
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(env_config.router_url, json={"model": "qwen2.5-0.5b", "messages": [{"role": "system", "content": router_sys}, {"role": "user", "content": raw_prompt}], "temperature": 0.1, "max_tokens": 5}, timeout=5) as resp:
+                async with session.post(ROUTER_URL, json={"model": "qwen2.5-0.5b", "messages": [{"role": "system", "content": router_sys}, {"role": "user", "content": raw_prompt}], "temperature": 0.1, "max_tokens": 5}, timeout=5) as resp:
                     if resp.status == 200:
                         router_reply = (await resp.json())["choices"][0]["message"]["content"].strip()
                         match = re.search(r"\d+(?:\.\d+)?", router_reply)
@@ -105,7 +117,7 @@ async def process_ai_request(
                             raw_temp = float(match.group())
                             dynamic_temp = 0.1 if raw_temp==1.0 else 0.3 if raw_temp==2.0 else 0.5 if raw_temp==3.0 else 0.9 if raw_temp>=4.0 else min(raw_temp, 2.0)
                             logger.success(f"🧠 [路由诊断] 推荐温度: {dynamic_temp}")
-        except Exception as e: logger.warning(f"路由超时: {e}")
+        except Exception as e: logger.warning(f"路由超时 (目标 {ROUTER_URL}): {e}")
 
     # 3. 参数覆盖与视觉降温
     if force_mode == "tech": mode, dynamic_temp = "tech", 0.4
@@ -126,10 +138,9 @@ async def process_ai_request(
 
     last_type = AI_PERSONA_STATE.get(session_id, "base")
     if last_type != current_type:
-        clear_memory(session_id)
+        await clear_memory(qq_id, session_id)
         if current_type == "ghost": await matcher.send("⚠️ [PRTS 严重警告] 底层数据流异常...认知模块受到强干扰。")
         elif current_type == "win98": await matcher.send("💾 [MS-DOS 启动] 正在挂载 Windows 98 SE 核心文件...")
-        else: await matcher.send("🔄 [系统提示] 异常流已断开。常规助手已重启。")
     AI_PERSONA_STATE[session_id] = current_type
 
     # 5. 组装终极防篡改提示词
@@ -159,23 +170,28 @@ async def process_ai_request(
                         img_bytes = await img_resp.read()
                         user_contents.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64.b64encode(img_bytes).decode('utf-8')}"}})
 
-    # 7. 请求主脑
+    # 7. 请求主脑 (从 MariaDB 获取上下文历史)
     messages_payload = [{"role": "system", "content": sys_prompt}]
-    if session_id in AI_CHAT_HISTORY: messages_payload.extend(AI_CHAT_HISTORY[session_id])
+    
+    # 🌟 核心：从数据库拉取历史对话
+    db_history = await fetch_chat_history_from_db(hashed_uid, MAX_HISTORY_ROUNDS)
+    messages_payload.extend(db_history)
+    
     messages_payload.append({"role": "user", "content": user_contents})
 
     payload = {"model": "gemma-3-4b-it", "messages": messages_payload, "temperature": dynamic_temp, "max_tokens": config.get("max_tokens", 8000)}
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(env_config.llama_server_url, json=payload, timeout=180) as response:
+        async with session.post(LLAMA_SERVER_URL, json=payload, timeout=180) as response:
             if response.status == 200:
                 ai_reply = (await response.json())["choices"][0]["message"]["content"].strip()
                 
-                # 记录简化的历史
-                if session_id not in AI_CHAT_HISTORY: AI_CHAT_HISTORY[session_id] = []
+                # 🌟 核心：将玩家提问和 AI 回复存入 MariaDB
                 history_q = f"[引用: {reply_text[:20]}...] {raw_prompt}" if reply_text else (raw_prompt or "[附件]")
-                AI_CHAT_HISTORY[session_id].extend([{"role": "user", "content": history_q}, {"role": "assistant", "content": ai_reply}])
-                if len(AI_CHAT_HISTORY[session_id]) > MAX_HISTORY_ROUNDS * 2: AI_CHAT_HISTORY[session_id] = AI_CHAT_HISTORY[session_id][-MAX_HISTORY_ROUNDS * 2:]
+                await save_message_to_db(hashed_uid, "user", history_q)
+                
+                # 👇 关键修复点：使用 "assistant" 替代 "ai"，解决 500 报错！
+                await save_message_to_db(hashed_uid, "assistant", ai_reply)
 
                 # 8. 动态发送策略
                 if mode == "chat" and not force_forward:
@@ -197,4 +213,5 @@ async def process_ai_request(
                         await matcher.finish()
                     else:
                         await matcher.finish(ai_reply)
-            else: await matcher.finish(f"🔴 AI 节点异常，状态码：{response.status}")
+            else: 
+                await matcher.finish(f"🔴 AI 节点异常，状态码：{response.status}")
