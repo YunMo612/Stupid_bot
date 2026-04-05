@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Stupid_bot 终极自动化部署脚本 (动态裁剪插件 + 数据库全自动配置)
+# Stupid_bot 终极自动化部署脚本
 # ==============================================================================
 set -e
 
@@ -55,7 +55,7 @@ ask_yes_no() {
     fi
 }
 
-# --- 3. 获取用户信息 ---
+# --- 3. 获取用户信息与 QQ 号 ---
 CURRENT_USER=${SUDO_USER:-$USER}
 TARGET_USER=$(get_input "用户配置" "请输入将要运行Bot的系统用户名 (UserName):" "$CURRENT_USER")
 USER_HOME="/home/$TARGET_USER"
@@ -63,15 +63,23 @@ USER_HOME="/home/$TARGET_USER"
 if [ -z "$TARGET_USER" ]; then echo "用户名不能为空，退出。"; exit 1; fi
 sudo mkdir -p "$USER_HOME"
 
+# 🌟 新增：获取 Bot QQ 号
+BOT_QQ=$(get_input "机器人配置" "请输入您准备作为机器人的 QQ 号码:\n(这将在稍后用于配置 NapCat 与环境文件)" "123456789")
+
 # --- 4. 基础环境安装 ---
 show_msg "环境安装" "步骤 1/7: 正在更新 apt 并安装基础依赖...\n(git, curl, python3, venv, mariadb-server 等)"
 sudo apt-get update -y
 sudo apt-get install -y git curl unzip python3 python3-pip python3-venv pipx mariadb-server
 
-# --- 5. NapCat 安装 ---
+# --- 5. NapCat 安装与 QQ 配置 ---
+INSTALL_NAPCAT=false
 if ask_yes_no "NapCat 安装" "步骤 2/7: 是否需要在此服务器上安装 NapCat (QQ 协议端)？"; then
-    show_msg "NapCat 安装" "正在调用 NapCat 官方安装脚本..."
-    curl -o napcat.sh https://nchat.qidianem.com/cmds/script.sh && sudo bash napcat.sh || echo "可能需手动确认。"
+    INSTALL_NAPCAT=true
+    show_msg "NapCat 安装" "正在为您静默安装并配置 NapCat 容器环境...\n即将绑定 QQ: $BOT_QQ"
+    
+    # 拉取最新的 NapCat 安装脚本并执行静默 Docker 安装 (传递 QQ 参数)
+    curl -o napcat.sh https://nclatest.znin.net/NapNeko/NapCat-Installer/main/script/install.sh
+    sudo bash napcat.sh --docker y --qq "$BOT_QQ" --mode ws --proxy 0 --confirm || echo "NapCat 容器部署可能需要手动介入，稍后可使用命令修复。"
 fi
 
 # --- 6. 分支与插件动态选择 ---
@@ -195,15 +203,15 @@ sudo -u "$TARGET_USER" pipx install nb-cli
 # --- 9. MariaDB 自动化配置 ---
 show_msg "配置数据库" "步骤 6/7: 接下来将配置 MariaDB 账户与安全加固。"
 if $USE_TUI; then
-    DB_USER=$(whiptail --title "数据库配置" --inputbox "请输入要创建的 MariaDB 用户名:" 10 60 "yunmo" 3>&1 1>&2 2>&3)
+    DB_USER=$(whiptail --title "数据库配置" --inputbox "请输入要创建的 MariaDB 用户名:" 10 60 " example" 3>&1 1>&2 2>&3)
     while true; do
         DB_PASS=$(whiptail --title "数据库配置" --passwordbox "请输入该用户的密码:" 10 60 3>&1 1>&2 2>&3)
         DB_PASS2=$(whiptail --title "数据库配置" --passwordbox "请再次输入密码以确认:" 10 60 3>&1 1>&2 2>&3)
         if [ "$DB_PASS" == "$DB_PASS2" ] && [ -n "$DB_PASS" ]; then break; else whiptail --title "错误" --msgbox "密码不一致或为空，重试！" 8 45; fi
     done
 else
-    read -p "[数据库配置] 请输入要创建的 MariaDB 用户名 [yunmo]: " DB_USER
-    DB_USER=${DB_USER:-yunmo}
+    read -p "[数据库配置] 请输入要创建的 MariaDB 用户名 [ example]: " DB_USER
+    DB_USER=${DB_USER:-example}
     while true; do
         read -s -p "[数据库配置] 请输入密码: " DB_PASS; echo ""
         read -s -p "[数据库配置] 再次输入: " DB_PASS2; echo ""
@@ -264,19 +272,44 @@ else
     fi
 fi
 
-# --- 11. 终极提示 ---
+# --- 11. 终极提示与唤起 NapCat 扫码 ---
 FINAL_MSG="✅ 安装全部完成！
 
-数据库账户已设定为: [ ${DB_USER} ]
+您的机器人环境已就绪。
+- 机器人 QQ: [ ${BOT_QQ} ]
+- 数据库账户: [ ${DB_USER} ]
 
 【⚠️ 启动前配置】：
-请修改 .env 配置文件，填入数据库账号密码！
+请务必修改 .env 配置文件，填入您的超级管理员 QQ 以及数据库账号密码！
 命令: nano $USER_HOME/Stupid_bot/.env
+    （或者使用您喜欢的文本编辑器）
 
-【启动机器人】：
+【启动机器人主控】：
 cd $USER_HOME/Stupid_bot
 source venv/bin/activate
-python bot.py"
+nb run --reload
 
 show_msg "部署完毕" "$FINAL_MSG"
-echo -e "\n🎉 Stupid_bot 自动化部署执行完毕！\n"
+
+if [ "$INSTALL_NAPCAT" = true ]; then
+    echo -e "\n\033[1;36m=================================================\033[0m"
+    echo -e "\033[1;33m即将进入 NapCat 容器为您显示登录二维码！\033[0m"
+    echo -e "\033[1;36m请掏出手机准备扫码登录。\033[0m"
+    echo -e "*(如果二维码未完全加载，可按 \033[1;31mCtrl+C\033[0m 退出，之后手动执行 'sudo docker logs -f napcat' 再次查看)*"
+    echo -e ""
+    echo -e "\033[1;31m【⚠️ 扫码常见问题：提示“登录超时”怎么办？】\033[0m"
+    echo -e "如果手机 QQ 扫码后一直转圈，最后提示 \033[1;33m“登录超时”\033[0m 或 \033[1;33m“网络异常”\033[0m，请按以下步骤解决："
+    echo -e "  1. 在当前黑框按 \033[1;31mCtrl+C\033[0m 退出二维码界面"
+    echo -e "  2. 输入命令重启协议端：\033[1;32msudo docker restart napcat\033[0m"
+    echo -e "  3. 再次输入命令获取全新二维码：\033[1;32msudo docker logs -f napcat\033[0m"
+    echo -e "  \033[1;35m*💡 玄学技巧：扫码时将手机 WiFi 关闭，使用 4G/5G 流量扫码，能大幅降低超时概率！\033[0m"
+    echo -e "\033[1;36m=================================================\033[0m"
+    
+    # 稍微多停顿几秒，确保用户有时间读完这段重要的排错提示
+    sleep 6 
+    
+    # 唤起 Docker 日志查看二维码
+    sudo docker logs -f napcat
+else
+    echo -e "\n🎉 Stupid_bot 自动化部署执行完毕！\n"
+fi
