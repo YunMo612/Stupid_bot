@@ -6,6 +6,7 @@ nonebot-adapter-onebot>=2.4.6
 aiomysql
 aiohttp
 httpx
+python-multipart
 
 # 业务功能与扩展库
 mcstatus
