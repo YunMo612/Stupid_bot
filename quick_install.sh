@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Stupid_bot 终极自动化部署脚本 (带滚屏进度条 + Docker自选 + 动态裁剪)
+# Stupid_bot 终极自动化部署脚本 (带滚屏进度条 + Docker自选 + 动态裁剪 + 皮肤站 + 自动清理)
 # ==============================================================================
 set -e
 
@@ -55,10 +55,10 @@ ask_yes_no() {
     fi
 }
 
-TOTAL_STEPS=7
+# 🌟 将总步数增加为 9 步 (加入了自动清理步骤)
+TOTAL_STEPS=9
 CURRENT_STEP=0
 
-# 🌟 新增：顶栏全局进度条
 advance_step() {
     ((CURRENT_STEP++))
     local step_name="$1"
@@ -75,7 +75,6 @@ advance_step() {
     echo -e "\033[1;34m=================================================\033[0m"
 }
 
-# 🌟 新增：下方日志拦截滚动输出
 run_logged() {
     "$@" 2>&1 | while IFS= read -r line; do
         echo -e "\033[1;30m│\033[0m $line"
@@ -104,13 +103,10 @@ DOCKER_FLAG=""
 
 if ask_yes_no "NapCat 安装" "是否需要在此服务器上安装 NapCat (QQ 协议端)？"; then
     INSTALL_NAPCAT=true
-    
-    # 🌟 新增：询问用户是否使用 Docker 安装
     if ask_yes_no "NapCat 安装方式" "您是否希望使用 Docker 容器化安装 NapCat？\n\n[Yes] : 使用 Docker 安装 (强烈推荐，环境隔离更稳定)\n[No]  : 使用原生脚本安装 (适合无 Docker 环境)"; then
         USE_DOCKER_NAPCAT=true
         DOCKER_FLAG="--docker y"
     fi
-    
     advance_step "部署 NapCat ($([ "$USE_DOCKER_NAPCAT" = true ] && echo "Docker版" || echo "原生版"))"
     run_logged curl -o napcat.sh https://nclatest.znin.net/NapNeko/NapCat-Installer/main/script/install.sh
     run_logged sudo bash napcat.sh $DOCKER_FLAG --qq "$BOT_QQ" --mode ws --proxy 0 --confirm || echo -e "\033[1;33mNapCat 部署遇到交互，请稍后手动检查。\033[0m"
@@ -161,6 +157,8 @@ with open('/tmp/options_cli.txt', 'w', encoding='utf-8') as f: f.write("\n".join
 EOF
 
 PRUNE_PLUGINS=false
+NEEDS_BS_PROMPT=false
+
 if python3 /tmp/parse_plugins.py; then
     PRUNE_PLUGINS=true
     MANDATORY_PLUGINS=$(cat /tmp/mandatories.txt)
@@ -189,6 +187,10 @@ if python3 /tmp/parse_plugins.py; then
                 for i in $keep_input; do [ -n "${CLI_MAP[$i]}" ] && SELECTED_PLUGINS="$SELECTED_PLUGINS ${CLI_MAP[$i]}"; done
             fi
         fi
+    fi
+    
+    if [[ "$SELECTED_PLUGINS" == *"server_tools"* ]] || [[ "$SELECTED_PLUGINS" == *"all"* ]] || [ -z "$SELECTED_PLUGINS" ] && [ -n "${cli_opts[*]}" ]; then
+        NEEDS_BS_PROMPT=true
     fi
 fi
 
@@ -307,16 +309,65 @@ else
     fi
 fi
 
-# --- 11. 终极提示与唤起 NapCat 扫码 ---
+# --- 11. Blessing Skin 自动化部署 ---
+BS_MSG=""
+if [ "$NEEDS_BS_PROMPT" = true ]; then
+    advance_step "部署 Blessing Skin 皮肤站"
+    if ask_yes_no "附加部署" "检测到您勾选了 MC 服务器相关插件 (server_tools)。\n\n是否需要在此服务器上一键启动 Blessing Skin (皮肤站) 容器，并自动连入配置好的数据库？"; then
+        BS_PORT=$(get_input "皮肤站配置" "请输入 Blessing Skin Web页面绑定的端口号 (例如: 8000):" "8000")
+        
+        show_msg "拉取容器" "正在为您拉取官方 Blessing Skin 镜像并配置数据库挂载，请稍候..."
+        
+        if ! command -v docker &> /dev/null; then
+            echo -e "\033[1;33m│ 未检测到 Docker，正在自动安装...\033[0m"
+            run_logged curl -fsSL https://get.docker.com | sudo bash -s docker
+        fi
+        
+        sudo mkdir -p "$USER_HOME/blessing_skin_data"
+        sudo chown -R 33:33 "$USER_HOME/blessing_skin_data" 
+        
+        run_logged sudo docker run -d --name blessing-skin --restart=always \
+          -p ${BS_PORT}:80 \
+          --add-host host.docker.internal:host-gateway \
+          -e DB_CONNECTION=mysql \
+          -e DB_HOST=host.docker.internal \
+          -e DB_PORT=3306 \
+          -e DB_DATABASE=blessing_skin \
+          -e DB_USERNAME="${DB_USER}" \
+          -e DB_PASSWORD="${DB_PASS}" \
+          -v "$USER_HOME/blessing_skin_data:/app/storage" \
+          printempw/blessing-skin-server:latest || echo -e "\033[1;31m│ 皮肤站启动失败，请检查端口是否被占用。\033[0m"
+          
+        BS_MSG="- 皮肤站后台: [ http://服务器IP:${BS_PORT} ] (初始配置请访问此地址)"
+    else
+        echo -e "\033[1;30m│\033[0m 用户选择跳过 Blessing Skin 部署。"
+    fi
+else
+    advance_step "跳过附加部署"
+    echo -e "\033[1;30m│\033[0m 未检测到依赖皮肤站的插件，已跳过此步骤。"
+fi
+
+# --- 12. 清理临时文件 (新增) ---
+advance_step "清理安装产生的临时文件"
+run_logged rm -f /tmp/plugins.json /tmp/parse_plugins.py /tmp/mandatories.txt /tmp/options_tui.txt /tmp/options_cli.txt /tmp/clean_plugins.py
+# 如果下载了 napcat.sh 脚本，顺手也清理掉
+if [ -f "napcat.sh" ]; then
+    run_logged rm -f napcat.sh
+fi
+echo -e "\033[1;30m│\033[0m 所有解析脚本与缓存已清空，保持系统整洁！"
+
+# --- 13. 终极提示与唤起 NapCat 扫码 ---
 FINAL_MSG="✅ 安装全部完成！
 
 您的机器人环境已就绪。
 - 机器人 QQ: [ ${BOT_QQ} ]
 - 数据库账户: [ ${DB_USER} ]
+${BS_MSG}
 
 【⚠️ 启动前配置】：
 请务必修改 .env 配置文件，填入您的超级管理员 QQ 以及数据库账号密码！
 命令: nano $USER_HOME/Stupid_bot/.env
+    （或者使用您喜欢的文本编辑器）
 
 【启动机器人主控】：
 cd $USER_HOME/Stupid_bot
