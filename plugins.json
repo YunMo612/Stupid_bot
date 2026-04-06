@@ -1,48 +1,26 @@
 {
   "web_ui": {
-<<<<<<< HEAD
-    "name_zh": "可视化控制面板",
-    "description": "提供基于 Web 的现代化机器人后台管理与监控界面。",
-    "version": "v7.0",
-=======
     "name_zh": "Stupid 控制面板",
     "description": "提供基于 Web 的现代化机器人后台管理与监控界面，已搭载全套 MD3 质感设计引擎与实时神经管道。",
     "version": "v8.0 Meta",
->>>>>>> dev
     "can_disable": false,
     "can_delete": false
   },
   "common_core": {
     "name_zh": "系统核心组件",
-<<<<<<< HEAD
-    "description": "提供底层依赖、定时任务调度以及公用函数库。",
-    "version": "v1.2.0",
-=======
     "description": "提供底层依赖支撑、定时任务调度以及跨组件公用函数库，维持整个框架的生命体征。",
     "version": "v2.5.0",
->>>>>>> dev
     "can_disable": false,
     "can_delete": false
   },
   "group_admin": {
-<<<<<<< HEAD
-    "name_zh": "群管与风控",
-    "description": "自动化群管，包含入群欢迎、违禁词撤回、自动踢人与黑名单管理。",
-    "version": "v2.1",
-=======
     "name_zh": "群管与风控系统",
     "description": "自动化群聊管家。包含入群欢迎、管理员指令、帮助菜单",
     "version": "v1.8.2",
->>>>>>> dev
     "can_disable": true,
     "can_delete": true
   },
   "prts_ai": {
-<<<<<<< HEAD
-    "name_zh": "PRTS 大模型引擎",
-    "description": "接入本地 LLM，赋予机器人上下文理解与自然语言对话能力。",
-    "version": "v3.0",
-=======
     "name_zh": "神经对话大模型",
     "description": "接入本地/云端 LLM 引擎，赋予机器人多轮上下文理解、情感模拟与自然语言生成能力。",
     "version": "v3.1.0",
@@ -53,7 +31,6 @@
     "name_zh": "消息寻迹记录仪",
     "description": "负责将日志保存到本地",
     "version": "v1.2",
->>>>>>> dev
     "can_disable": true,
     "can_delete": true
   }

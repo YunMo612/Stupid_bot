@@ -2,13 +2,6 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-<<<<<<< HEAD
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stupid_UI</title>
-    <link rel="icon" href="./icon/icon.png" type="image/png">
-    
-    <script>document.write('<link rel="stylesheet" href="./style.css?t=' + new Date().getTime() + '">');</script>
-=======
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="./icon/icon.png">
     <title>Stupid_UI - Core v8.0 Meta</title>
@@ -31,38 +24,9 @@
             document.head.appendChild(link);
         })();
     </script>
->>>>>>> dev
 </head>
 <body class="dark-theme"> <div class="glass-overlay"></div>
 
-<<<<<<< HEAD
-    <div class="glass-overlay"></div>
-    <div id="mobile-overlay" class="mobile-overlay" onclick="window.toggleMobileMenu()"></div>
-
-    <div id="sidebar" class="sidebar glass-panel" data-interactive="true">
-        <div class="sidebar-header">
-            <h2 class="neon-text">Stupid_UI</h2>
-            <p style="font-size: 0.8rem; color: rgba(var(--monet-rgb), 0.8); margin-top: 5px; font-weight: bold;">Core v8.0 Meta</p>
-        </div>
-        
-        <ul class="menu">
-            <li class="menu-item active" onclick="window.switchTab('page-dashboard', this, '📊 基础信息')">📊 基础信息</li>
-            <li class="menu-item" onclick="window.switchTab('page-env', this, '🎛️ 环境配置')">🎛️ 环境配置</li>
-            <li class="menu-item" onclick="window.switchTab('page-plugins', this, '📦 插件管理')">📦 插件管理</li>
-            <li class="menu-item" onclick="window.switchTab('page-logs', this, '📝 神经日志')">📝 神经日志</li>
-            <li class="menu-item" onclick="window.switchTab('page-settings', this, '⚙️ 系统设置')">⚙️ 系统设置</li>
-        </ul>
-    </div>
-
-    <button id="theme-btn" class="theme-float-btn glass-btn" onclick="window.toggleTheme(event)" title="切换主题">☀️</button>
-
-    <div class="main-content">
-        <div class="topbar">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <button id="mobile-menu-btn" class="glass-btn" onclick="window.toggleMobileMenu()">☰</button>
-                <h2 id="topbar-title" class="neon-text">📊 基础信息</h2>
-            </div>
-=======
     <div class="mobile-overlay" id="mobile-overlay" onclick="window.toggleMobileMenu()"></div>
 
     <div class="sidebar glass-panel" id="sidebar" data-interactive="true">
@@ -108,7 +72,6 @@
             <h2 id="topbar-title" style="display: flex; align-items: center; gap: 12px; font-weight: 500;" class="neon-text">
                 <span class="material-symbols-outlined">analytics</span> 基础信息
             </h2>
->>>>>>> dev
         </div>
 
         <div id="page-dashboard" class="page-container active">
@@ -126,17 +89,6 @@
         <div id="page-env" class="page-container">
             <div class="card glass-panel" data-interactive="true">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-<<<<<<< HEAD
-                    <h3 style="margin: 0;">🎛️ 全局核心环境变量</h3>
-                    <button class="glass-btn btn-outline" onclick="window.addNewEnvVar()">➕ 新增变量</button>
-                </div>
-                <p class="text-muted" style="margin-top: 10px;">可视化管理底层 .env 配置文件。修改将安全保留原文件内的注释，系统需重启后生效。</p>
-                
-                <div id="env-list-container" style="margin-top: 20px;">
-                    <div style="color:rgba(var(--monet-rgb),1); text-align:center; padding: 20px;">⏳ 正在解析 .env 配置文件...</div>
-                </div>
-                
-=======
                     <h3 style="margin: 0;"><span class="material-symbols-outlined" style="vertical-align: text-bottom; margin-right: 5px;">database</span>全局核心环境变量</h3>
                     <button class="glass-btn btn-outline" onclick="window.addNewEnvVar()">➕ 新增变量</button>
                 </div>
@@ -144,7 +96,6 @@
                 <div id="env-list-container" style="margin-top: 20px;">
                     <div style="text-align:center; padding: 20px;">⏳ 正在解析 .env 配置文件...</div>
                 </div>
->>>>>>> dev
                 <div class="btn-group-responsive align-center" style="margin-top: 25px;">
                     <button id="btn-save-env" class="toggle-btn glass-btn special-glow" onclick="window.saveEnvConfig()">💾 保存配置到 .env</button>
                     <span id="save-env-msg" style="font-weight: bold;"></span>
@@ -154,26 +105,16 @@
 
         <div id="page-plugins" class="page-container">
             <div class="card glass-panel" data-interactive="true">
-<<<<<<< HEAD
-                <h3>⚡ 热安装模块</h3>
-=======
                 <h3><span class="material-symbols-outlined" style="vertical-align: text-bottom; margin-right: 5px;">bolt</span>热安装模块</h3>
->>>>>>> dev
                 <div id="drop-zone" class="drop-zone glass-panel-inner">
                     <span id="drop-msg">点击或将 .zip 拖拽到此处进行热安装</span>
                 </div>
                 <input type="file" id="file-input" accept=".zip" style="display: none;">
             </div>
             <div class="card glass-panel" data-interactive="true" style="margin-top: 20px;">
-<<<<<<< HEAD
-                <h3>🔌 元数据节点拓扑</h3>
-                <div id="plugin-list" class="plugin-list-container">
-                    <div style="color:rgba(var(--monet-rgb),1); text-align:center; padding: 20px;">⏳ 同步配置清单中...</div>
-=======
                 <h3><span class="material-symbols-outlined" style="vertical-align: text-bottom; margin-right: 5px;">account_tree</span>元数据节点拓扑</h3>
                 <div id="plugin-list" class="plugin-list-container">
                     <div style="text-align:center; padding: 20px;">⏳ 同步配置清单中...</div>
->>>>>>> dev
                 </div>
             </div>
         </div>
@@ -192,28 +133,6 @@
         </div>
 
         <div id="page-settings" class="page-container">
-<<<<<<< HEAD
-            <div class="card glass-panel" data-interactive="true">
-                <h3>🎨 视觉与外观</h3>
-                <p class="text-muted">定制你的控制台环境光与材质，变更将自动保存。</p>
-                
-                <div class="settings-row">
-                    <span>自定义背景壁纸 (自动莫奈取色)</span>
-                    <div class="btn-group-responsive align-center">
-                        <button class="toggle-btn glass-btn" onclick="document.getElementById('bg-upload').click()">上传本地图片</button>
-                        <button class="toggle-btn glass-btn btn-outline" onclick="window.resetBackground()">恢复默认</button>
-                        <span id="bg-upload-msg" style="font-weight: bold; font-size: 0.9rem;"></span>
-                    </div>
-                    <input type="file" id="bg-upload" accept="image/*" style="display: none;">
-                </div>
-                
-                <div class="settings-divider"></div>
-                
-                <div class="settings-row">
-                    <div>
-                        <strong style="display:block; margin-bottom:5px;">全局动态光影与动画</strong>
-                        <span class="text-muted" style="font-size:0.8rem; margin:0;">禁用后可大幅降低旧设备的 GPU 占用。</span>
-=======
             <div class="card glass-panel-inner" data-interactive="true">
                 <h3 style="display: flex; align-items: center; gap: 8px; color: var(--md-sys-color-primary, rgba(var(--monet-rgb), 1));">
                     <span class="material-symbols-outlined">palette</span> 视觉与外观
@@ -249,20 +168,12 @@
                     <div>
                         <div style="font-weight: 500; font-size: 1.05rem; margin-bottom: 4px;">全局动态光影与动画</div>
                         <div class="text-muted" style="font-size: 0.85rem; margin-bottom: 0;">禁用后可大幅降低旧设备的 GPU 占用。</div>
->>>>>>> dev
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="setting-anim" onchange="window.toggleSetting('anim', this.checked)" checked>
                         <span class="slider round"></span>
                     </label>
                 </div>
-<<<<<<< HEAD
-                
-                <div class="settings-row">
-                    <div>
-                        <strong style="display:block; margin-bottom:5px;">深度毛玻璃材质 (Glassmorphism)</strong>
-                        <span class="text-muted" style="font-size:0.8rem; margin:0;">禁用后将使用高对比度实体色块替换半透明面板。</span>
-=======
                 <div class="settings-divider"></div>
                 <div class="settings-row">
                     <div>
@@ -282,7 +193,6 @@
                     <div>
                         <div style="font-weight: 500; font-size: 1.05rem; margin-bottom: 4px;">深度毛玻璃材质 (Glassmorphism)</div>
                         <div class="text-muted" style="font-size: 0.85rem; margin-bottom: 0;">禁用后将使用高对比度实体色块替换半透明面板。</div>
->>>>>>> dev
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="setting-glass" onchange="window.toggleSetting('glass', this.checked)" checked>
@@ -290,8 +200,6 @@
                     </label>
                 </div>
             </div>
-<<<<<<< HEAD
-=======
             
             <div class="card glass-panel-inner" style="border-color: rgba(var(--md-sys-color-error-rgb, 191,97,106), 0.3);">
                 <h3 style="display: flex; align-items: center; gap: 8px; color: var(--md-sys-color-error, #bf616a);">
@@ -304,7 +212,6 @@
                     </button>
                 </div>
             </div>
->>>>>>> dev
         </div>
 
     </div>
@@ -320,70 +227,16 @@
             <p class="modal-text">所有视觉与外观设置将恢复到初始状态。</p>
             <p class="modal-subtext">此操作无法撤销。</p>
             <div class="modal-actions">
-<<<<<<< HEAD
-                <button class="toggle-btn glass-btn" onclick="window.closeDeleteModal()">取消操作</button>
-                <button id="btn-confirm-plugin" class="delete-btn glass-btn-danger" disabled onclick="window.executeDelete()">🗑️ 确认销毁</button>
-=======
                 <button class="glass-btn" onclick="document.getElementById('demo-modal').classList.remove('show')">取消</button>
                 <button class="glass-btn-danger" onclick="window.resetAllSettings()">确认重置</button>
->>>>>>> dev
             </div>
         </div>
     </div>
 
-<<<<<<< HEAD
-    <div id="env-delete-modal" class="modal-overlay">
-        <div class="modal-box glass-panel">
-            <div class="modal-icon" style="text-shadow: 0 0 20px #bf616a;">⚠️</div>
-            <h3 class="modal-title" style="text-shadow: 0 0 10px rgba(191,97,106,0.5);">危 险 操 作</h3>
-            <p class="modal-text">确定要永久删除环境变量：<br><strong id="env-delete-key" style="color: #bf616a; font-family: 'Consolas', monospace; font-size: 1.3rem;"></strong></p>
-            <p class="modal-subtext">该操作可能导致依赖此变量的底层模块无法正常运行！</p>
-            <div class="modal-actions">
-                <button class="toggle-btn glass-btn" onclick="window.closeEnvDeleteModal()">取消操作</button>
-                <button id="btn-confirm-env" class="delete-btn glass-btn-danger" disabled onclick="window.executeEnvDelete()">🗑️ 确认删除</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="add-env-modal" class="modal-overlay">
-        <div class="modal-box glass-panel" style="max-width: 450px; text-align: left;">
-            <h3 style="margin-top: 0; margin-bottom: 20px; color: var(--text-main); font-size: 1.4rem;">➕ 新增环境变量</h3>
-            
-            <div class="input-group">
-                <label style="color: var(--text-muted); font-size: 0.85rem;">变量名 (KEY) - 支持自动补全</label>
-                <input type="text" id="new-env-key" class="glass-input code-font" placeholder="例如: SUPERUSERS" list="env-keys-list" autocomplete="off">
-                <datalist id="env-keys-list">
-                    <option value="HOST">
-                    <option value="PORT">
-                    <option value="SUPERUSERS">
-                    <option value="COMMAND_START">
-                    <option value="COMMAND_SEP">
-                    <option value="LOG_LEVEL">
-                    <option value="LLAMA_SERVER_URL">
-                    <option value="ROUTER_URL">
-                    <option value="API_KEY">
-                </datalist>
-            </div>
-            
-            <div class="input-group">
-                <label style="color: var(--text-muted); font-size: 0.85rem;">初始值 (VALUE) - 选填</label>
-                <input type="text" id="new-env-val" class="glass-input code-font string-highlight" placeholder='例如: ["123456"]' autocomplete="off">
-            </div>
-            
-            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;">
-                <button class="toggle-btn glass-btn" onclick="window.closeAddEnvModal()">取消</button>
-                <button class="toggle-btn glass-btn" style="border-color: #a3be8c; color: #a3be8c; background: rgba(163, 190, 140, 0.15);" onclick="window.confirmAddEnvVar()">确认添加</button>
-            </div>
-        </div>
-    </div>
-    
-    <script>document.write('<script src="./app.js?t=' + new Date().getTime() + '"><\/script>');</script>
-=======
     <script>
         var script = document.createElement('script');
         script.src = './app.js?v=' + new Date().getTime();
         document.body.appendChild(script);
     </script>
->>>>>>> dev
 </body>
 </html>
