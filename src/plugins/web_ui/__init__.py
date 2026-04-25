@@ -3,13 +3,16 @@
 # ==============================================================================
 
 import os
+import re
+import hmac
 import zipfile
 import shutil
 import asyncio
 import json
 import nonebot
 from nonebot.plugin import PluginMetadata
-from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect, Request, Depends
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -32,6 +35,34 @@ ENV_PATH = os.path.join(ROOT_DIR, ".env")
 PLUGIN_DIR = os.path.join(ROOT_DIR, "src", "plugins")
 PLUGINS_JSON_PATH = os.path.join(ROOT_DIR, "plugins.json")
 
+# ==================== 🔐 API 鉴权中间件 ====================
+def _load_web_token() -> str:
+    """从 .env 读取 WEB_UI_TOKEN"""
+    if os.path.exists(ENV_PATH):
+        with open(ENV_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                stripped = line.strip()
+                if stripped.startswith("WEB_UI_TOKEN="):
+                    return stripped.split("=", 1)[1].strip().strip("'").strip('"')
+    return ""
+
+async def verify_token(request: Request):
+    """校验 Authorization header 中的 Bearer token"""
+    token = _load_web_token()
+    if not token:
+        # 未配置 token 时放行（兼容首次部署）
+        return
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"status": "error", "msg": "未提供鉴权令牌"})
+    provided = auth_header[7:]
+    if not hmac.compare_digest(provided, token):
+        return JSONResponse(status_code=403, content={"status": "error", "msg": "鉴权令牌无效"})
+
+def _is_safe_plugin_name(name: str) -> bool:
+    """校验插件名不含路径穿越字符"""
+    return bool(name) and not re.search(r'[/\\]|\.\.', name)
+
 
 # ==================== 📊 系统与连通性 API ====================
 @app.get("/api/system/status")
@@ -44,7 +75,7 @@ async def check_ai_status():
 
 
 # ==================== 🎛️ 全局 .env 配置管理 API ====================
-@app.get("/api/config/env")
+@app.get("/api/config/env", dependencies=[Depends(verify_token)])
 async def get_env_config():
     """解析并返回 .env 文件中的所有键值对"""
     config = {}
@@ -60,7 +91,7 @@ async def get_env_config():
 class EnvConfig(BaseModel):
     config: dict
 
-@app.post("/api/config/env")
+@app.post("/api/config/env", dependencies=[Depends(verify_token)])
 async def save_env_config(req: EnvConfig):
     """覆写 .env 文件，同时智能保留注释和空行"""
     lines = []
@@ -135,7 +166,7 @@ class ToggleRequest(BaseModel):
     raw_name: str
     target_status: str
 
-@app.post("/api/plugins/toggle")
+@app.post("/api/plugins/toggle", dependencies=[Depends(verify_token)])
 async def toggle_plugin(req: ToggleRequest):
     base_name = req.raw_name.lstrip("_")
     active_path = os.path.join(PLUGIN_DIR, base_name)
@@ -171,9 +202,17 @@ async def toggle_plugin(req: ToggleRequest):
 class DeleteRequest(BaseModel):
     raw_name: str
 
-@app.post("/api/plugins/delete")
+@app.post("/api/plugins/delete", dependencies=[Depends(verify_token)])
 async def delete_plugin(req: DeleteRequest):
-    target_path = os.path.join(PLUGIN_DIR, req.raw_name)
+    # 路径穿越防护
+    if not _is_safe_plugin_name(req.raw_name):
+        return {"status": "error", "msg": "非法插件名称！"}
+
+    target_path = os.path.realpath(os.path.join(PLUGIN_DIR, req.raw_name))
+    # 二次校验：解析后的真实路径必须仍在 PLUGIN_DIR 内
+    if not target_path.startswith(os.path.realpath(PLUGIN_DIR) + os.sep):
+        return {"status": "error", "msg": "非法路径！"}
+
     base_name = req.raw_name.lstrip("_")
     
     if os.path.exists(PLUGINS_JSON_PATH):
@@ -198,17 +237,26 @@ async def delete_plugin(req: DeleteRequest):
 
 
 # ==================== ☁️ ZIP 热安装 API ====================
-@app.post("/api/plugins/upload")
+@app.post("/api/plugins/upload", dependencies=[Depends(verify_token)])
 async def upload_plugin_zip(file: UploadFile = File(...)):
-    if not file.filename.endswith(".zip"):
+    if not file.filename or not file.filename.endswith(".zip"):
         return {"status": "error", "msg": "只能上传 .zip 格式的安装包！"}
-        
-    temp_zip = os.path.join(PLUGIN_DIR, file.filename)
+
+    # 防止文件名本身包含路径穿越
+    safe_filename = os.path.basename(file.filename)
+    temp_zip = os.path.join(PLUGIN_DIR, safe_filename)
     try:
         with open(temp_zip, "wb") as f:
             f.write(await file.read())
-            
+
+        # Zip Slip 防护：校验所有条目路径
+        real_plugin_dir = os.path.realpath(PLUGIN_DIR)
         with zipfile.ZipFile(temp_zip, 'r') as zip_ref:
+            for entry in zip_ref.namelist():
+                entry_path = os.path.realpath(os.path.join(PLUGIN_DIR, entry))
+                if not entry_path.startswith(real_plugin_dir + os.sep) and entry_path != real_plugin_dir:
+                    os.remove(temp_zip)
+                    return {"status": "error", "msg": f"安全拦截：ZIP 内含非法路径 [{entry}]！"}
             zip_ref.extractall(PLUGIN_DIR)
             
         os.remove(temp_zip)
@@ -222,7 +270,7 @@ async def upload_plugin_zip(file: UploadFile = File(...)):
 
 
 # ==================== 📝 WebSocket 实时日志引擎 ====================
-@app.websocket("/api/logs/ws")
+@app.websocket("/api/logs/stream")
 async def websocket_logs(websocket: WebSocket):
     await websocket.accept()
     last_mtime = 0  

@@ -19,21 +19,41 @@ from . import voice_handler
 
 driver = get_driver()
 
+# -------------------------------------------------------------------------
+# 启动时初始化 AI 数据库连接池
+# -------------------------------------------------------------------------
 @driver.on_startup
-async def startup():
+async def _init_ai_db():
     await init_db_pool()
+
+# -------------------------------------------------------------------------
+# 启动时索引静态知识库
+# -------------------------------------------------------------------------
+@driver.on_startup
+async def _index_knowledge():
+    try:
+        from .knowledge import ingest_docs
+        import asyncio
+        await asyncio.to_thread(ingest_docs)
+    except Exception as e:
+        logger.warning(f"⚠️ [知识库] 启动索引失败: {e}")
 
 @driver.on_shutdown
 async def shutdown():
     await close_db_pool()
 
 # 🌟 关键修改：使用 on_message 和 rule=to_me()，必须被 @ 才会触发
-ai_matcher = on_message(rule=to_me(), priority=2, block=True)
+# priority=99 确保所有 on_command 优先处理完毕后才轮到 AI
+ai_matcher = on_message(rule=to_me(), priority=99, block=True)
 
 @ai_matcher.handle()
 async def handle_ai_entry(bot: Bot, event: MessageEvent):
     # 步骤 1：提取纯文本输入 (因为不用 on_command 了，所以不再使用 CommandArg)
     raw_prompt = event.get_plaintext().strip()
+
+    # 🌟 关键修复：如果消息是指令格式（以 / 开头），跳过 AI 处理，避免与其他指令冲突
+    if raw_prompt.startswith("/"):
+        return
     
     # 兼容清理：如果用户 @bot 的同时还习惯性打字 "/ai 帮我查代码"，把前缀过滤掉
     for cmd in ["/ai", "ai", "问问", "大模型", "聊天", "看看"]:

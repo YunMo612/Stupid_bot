@@ -3,7 +3,7 @@
     "top_p": 0.3,
     "max_tokens": 8000,
     "persona_settings": {
-        "priestess_probability": 0.4,
+        "priestess_probability": 0.2,
         "chat_temp_threshold": 0.5
     }
 }

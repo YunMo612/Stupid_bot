@@ -4,9 +4,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import nonebot
+from nonebot import get_driver
 
 # 拿到 NoneBot 底层的 FastAPI 实例
 app: FastAPI = nonebot.get_app()
+
+# 从环境变量读取 TTS 地址
+MELOTTS_API_URL = getattr(get_driver().config, "melotts_api_url", "http://127.0.0.1:8082")
 
 # 定义外部设备传过来的数据格式
 class DeviceRequest(BaseModel):
@@ -23,7 +27,7 @@ async def device_chat_endpoint(req: DeviceRequest):
     llm_text = f"收到设备 {req.device_id} 的指令，这是测试回复。" # 替换为你真实的大模型调用
     
     # 2. 准备物理机 MeloTTS 的接口地址
-    tts_api_url = "http://192.168.95.55:8082"  # 替换为真实地址
+    tts_api_url = MELOTTS_API_URL
     tts_payload = {"text": llm_text, "language": "ZH"} # 根据你的 MeloTTS 接口文档调整
     
     # 3. 创建异步音频流生成器 (透传魔法)

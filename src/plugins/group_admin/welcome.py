@@ -54,7 +54,7 @@ async def handle_group_increase(bot: Bot, event: GroupIncreaseNoticeEvent):
     try:
         async with aiohttp.ClientSession() as session:
             # 动态使用环境变量里的 ROUTER_URL
-            async with session.post(env_config.router_url, json=payload, timeout=5) as response:
+            async with session.post(env_config.router_url, json=payload, timeout=aiohttp.ClientTimeout(total=5)) as response:
                 if response.status == 200:
                     ai_reply = (await response.json())["choices"][0]["message"]["content"].strip()
                     if ai_reply.startswith(('"', '“')) and ai_reply.endswith(('"', '”')):

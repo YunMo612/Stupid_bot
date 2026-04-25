@@ -68,7 +68,7 @@
 
 | 模块 | 版本 | 说明 |
 |:---:|:---:|---|
-| 🧠 **prts_ai** | v3.2.0 | 三人格 AI 对话引擎，支持图像分析、多轮上下文、语音合成、三层记忆架构、RAG 知识库 |
+| 🧠 **prts_ai** | v3.1.0 | 三人格 AI 对话引擎，支持图像分析、多轮上下文、语音合成、三层记忆架构、RAG 知识库 |
 | 💻 **web_ui** | v8.0 | Material Design 3 可视化控制台，5 页面 + ZIP 热装插件 |
 | 🎮 **server_tools** | — | Minecraft 服务器状态查询 & BlessingSkin 皮肤站集成 |
 | 👑 **group_admin** | v1.8.2 | 权限三级分层、管理员指令、AI 智能欢迎语 |
@@ -195,7 +195,7 @@ Bot 内置 **三套独立人格**，每套人格包含 `chat`（闲聊）和 `te
 | 人格 | 代号 | 风格描述 | 触发方式 |
 |:---:|:---:|---|---|
 | 🤖 **PRTS** | `base` | 理性、专业的 AI 助手，默认人格 | 默认激活 |
-| 👻 **Priestess** | `ghost` | 偏执型赛博实体，情感浓烈 | 随机触发（概率可调） |
+| 👻 **Priestess** | `ghost` | ✋😭🤚劳普✋😭🤚 | 随机触发（概率可调） |
 | 💾 **Dr. Watson** | `win98` | Windows 98 复古终端 / 蓝屏诊断报告 | 命令标志 `-win98` |
 
 > 🎲 Priestess 的触发概率由 `ai_config.json` 中的 `priestess_probability` 控制（默认 40%）。
@@ -315,15 +315,19 @@ Bot 内置 **三套独立人格**，每套人格包含 `chat`（闲聊）和 `te
 |:---:|---|---|
 | `GET` | `/api/system/status` | 获取系统状态与框架版本 |
 | `POST` | `/api/ai/status` | LLM 服务连通性检查 |
-| `GET / POST` | `/api/config/env` | 读取 / 更新 `.env` 配置 |
+| `GET / POST` | `/api/config/env` | 读取 / 更新 `.env` 配置（Bearer Token 鉴权） |
 | `GET` | `/api/plugins` | 获取插件元数据列表 |
+| `POST` | `/api/plugins/toggle` | 启用 / 禁用插件（Bearer Token 鉴权） |
+| `POST` | `/api/plugins/delete` | 删除插件（Bearer Token 鉴权） |
+| `POST` | `/api/plugins/upload` | ZIP 拖拽上传安装插件（Bearer Token 鉴权） |
 | `WebSocket` | `/api/logs/stream` | 实时日志推送 |
+| `POST` | `/api/device/chat` | 外部设备对话接口（TTS 流式返回） |
 
 ---
 
 ## 🎮 服务器工具 — server_tools
 
-面向 **Minecraft 服务器** 与 **BlessingSkin 开源皮肤站** 的集成工具链。
+面向 **Minecraft 服务器** 与 **BlessingSkin 开源皮肤站** 的集成工具链。~~~~
 
 | 命令 | 说明 | 使用场景 | 示例 |
 |:---:|---|:---:|---|
@@ -336,10 +340,10 @@ Bot 内置 **三套独立人格**，每套人格包含 `chat`（闲聊）和 `te
 
 | 命令 | 说明 | 使用场景 | 示例 |
 |:---:|---|:---:|---|
-| `/test_add <插件名>` | 将功能打回测试服，锁定为测试群/私聊可用 | 仅私聊 | `/test_add audio_record` |
-| `/test_done <插件名>` | 完成测试，将功能全量开放给所有玩家 | 仅私聊 | `/test_done audio_record` |
-| `/test_set <群号>` | 绑定测试沙箱群 | 仅私聊 | `/test_set 123456789` |
-| `/test_list` | 查看当前所有测试中的功能和沙箱群 | 仅私聊 | `/test_list` |
+| `/test_add <插件> [-n 昵称] [/cmd ...]` | 将功能打回测试服；支持指定昵称与限定指令级粒度，追加模式 | 仅私聊 | `/test_add audio_record -n 音频录制 /record /stop` |
+| `/test_done <插件> [/cmd]` | 完成测试全量开放；可单独开放某条指令 | 仅私聊 | `/test_done audio_record /record` |
+| `/test_set <群号>` | 绑定测试沙箱群，让测试中的功能仅对该群可用 | 仅私聊 | `/test_set 123456789` |
+| `/test_list` | 查看当前所有测试中的功能、受限指令及沙箱群 | 仅私聊 | `/test_list` |
 
 > 💡 `/绑定` 命令需要邮箱二次确认，确保账号安全。
 
@@ -358,9 +362,10 @@ Bot 内置 **三套独立人格**，每套人格包含 `chat`（闲聊）和 `te
 | `/code_list` | Admin+ | 查看未使用的邀请码列表 |
 | `/删除邀请码 <code>` | Admin+ | 删除指定邀请码 |
 | `/删除记录 <QQ号>` | Admin+ | 重置用户的领取记录 |
-| `/dev_reset [-h]` | Dev | 重置自身的底层数据（邀请码/绑定/签到） |
-| `/test_add <插件名>` | Dev | 将功能打回测试服 |
-| `/test_done <插件名>` | Dev | 完成测试全量开放 |
+| `/广播 <消息> [-群号] [-不匿名]` | Admin+ | 向指定群或所有群发送广播通知 |
+| `/dev_reset [-h\|-code\|-band\|-签到]` | Dev | 重置自身底层数据（无参=全量，或按类型选择性重置） |
+| `/test_add <插件> [-n 昵称] [/cmd ...]` | Dev | 将功能打回测试服（支持指令级粒度） |
+| `/test_done <插件> [/cmd]` | Dev | 完成测试全量开放（可单独开放某指令） |
 | `/test_set <群号>` | Dev | 绑定测试沙箱群 |
 | `/test_list` | Dev | 查看当前测试名单 |
 
@@ -398,8 +403,8 @@ from src.plugins.common_core import (
 
 - 📅 每日午夜自动日志轮转
 - 🗑️ 7 天日志自动清理
-- 📡 API 调用拦截记录（`send_msg`、`get_forward_msg` 等）
-- 🔍 消息预处理日志
+- 📡 API 调用拦截记录（8 类：`send_msg` / `send_group_msg` / `send_private_msg` / `get_forward_msg` / `send_group_forward_msg` / `delete_msg` / `set_group_kick` / `set_group_ban`）
+- 🔍 消息预处理日志（记录 Plugin / Command / UserID / GroupID）
 
 ---
 
@@ -414,7 +419,8 @@ Stupid_Bot/
 ├── ai_config.json              # AI 行为参数
 ├── ai_prompt.json              # AI 人格 Prompt 定义
 ├── plugins.json                # 插件元数据（名称 / 版本 / 描述）
-├── bot_data.json               # 本地数据存储
+├── bot_data.json               # 本地数据存储（权限 / 绑定 / 签到等）
+├── test_list.json              # 测试环境名单（插件 / 指令级粒度）
 ├── logs/                       # 运行日志目录
 ├── data/                       # 数据目录
 │   ├── knowledge/              # RAG 知识库
@@ -424,29 +430,38 @@ Stupid_Bot/
 └── src/
     └── plugins/                # 插件目录
         ├── common_core/        # 🔧 核心库（MariaDB / 配置 / 数据）
-        │   └── __init__.py
-        ├── system_log/         # 📋 日志系统（轮转 / 拦截）
+        │   ├── __init__.py     # 统一导出接口
+        │   ├── config.py       # 环境变量 & .env 配置加载
+        │   ├── data_manager.py  # bot_data.json 读写 & 全局数据字典
+        │   └── database.py     # 异步 MariaDB 连接池（aiomysql）
+        ├── system_log/         # 📋 日志系统（轮转 / API 拦截 / 预处理记录）
         │   └── __init__.py
         ├── prts_ai/            # 🧠 AI 中枢（多人格 / 多模态 / 三层记忆）
-        │   ├── __init__.py
+        │   ├── __init__.py     # 事件响应总控 & 标志解析
         │   ├── llm_service.py   # LLM 调度核心 & 记忆检索
         │   ├── knowledge.py     # RAG 知识库引擎（ChromaDB + BGE）
         │   ├── database.py      # AI 对话历史 DB 操作
         │   ├── persona.py       # 人格配置加载
-        │   └── voice_handler.py # 语音合成 & 文件事件处理
+        │   ├── voice_handler.py # 语音合成 & 文件事件处理
+        │   └── web_api.py       # 外部设备对话 & TTS 流式 API
         ├── web_ui/             # 💻 WebUI 控制台
-        │   ├── __init__.py     # 后端 API 路由
+        │   ├── __init__.py     # 后端 API 路由（鉴权 / 插件管理）
         │   └── frontend/       # 前端静态资源
         │       ├── index.html
         │       ├── style.css
         │       └── app.js
         ├── server_tools/       # 🎮 MC 服务器 & 皮肤站工具
-        │   └── __init__.py
+        │   ├── __init__.py     # 插件加载入口
+        │   ├── invite.py       # 邀请码生成（/获取邀请码）
+        │   ├── bind_sign.py    # 邮箱绑定 & 每日签到
+        │   ├── query.py        # MC 服务器状态查询
+        │   └── data_manager.py # 测试环境管理台 & 全局拦截器
         └── group_admin/        # 👑 群管模块
-            ├── __init__.py
-            ├── admin_cmd.py    # 管理员指令
-            ├── help_menu.py    # 帮助菜单
-            └── welcome.py      # AI 欢迎语
+            ├── __init__.py     # 插件加载入口
+            ├── admin_cmd.py    # 管理员 & 开发者指令
+            ├── broadcast.py    # 群发广播（/广播）
+            ├── help_menu.py    # 动态权限帮助菜单
+            └── welcome.py      # AI 智能欢迎语
 ```
 
 ### 插件加载顺序
@@ -471,6 +486,8 @@ my_plugin/
 ```
 
 在 `plugins.json` 中注册插件元数据后，即可在 WebUI 中管理。
+
+> 💡 `plugins.json` 中的键名对应插件目录名（如 `server_tools`），但 `system_log` 在 `plugins.json` 中注册为 `message_logger`（历史沿用名）。
 
 ### 配置 LLM
 

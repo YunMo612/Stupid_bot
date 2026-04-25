@@ -1,9 +1,15 @@
 import os
 import json
+import threading
 from nonebot import logger
 
-DATA_FILE = "bot_data.json"
+# 计算项目根目录的绝对路径
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+_ROOT_DIR = os.path.abspath(os.path.join(_CURRENT_DIR, "..", "..", ".."))
+
+DATA_FILE = os.path.join(_ROOT_DIR, "bot_data.json")
 BOT_DATA = {}
+_data_lock = threading.Lock()
 
 def load_data():
     global BOT_DATA
@@ -23,8 +29,9 @@ def load_data():
     logger.success("📦 全局数据存储已挂载")
 
 def save_data():
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(BOT_DATA, f, ensure_ascii=False, indent=4)
+    with _data_lock:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(BOT_DATA, f, ensure_ascii=False, indent=4)
 
 def get_data(key: str, default=None):
     return BOT_DATA.get(key, default)

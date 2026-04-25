@@ -15,3 +15,4 @@ __plugin_meta__ = PluginMetadata(
 from . import help_menu
 from . import welcome
 from . import admin_cmd
+from . import broadcast

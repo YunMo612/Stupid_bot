@@ -19,13 +19,88 @@ from .persona import load_ai_config, load_personas
 # 🌟 引入刚写好的数据库模块 (使用哈希 UID 与 MySQL 进行交互)
 from .database import get_hashed_uid, fetch_chat_history_from_db, save_message_to_db, clear_memory_in_db
 
-# 动态读取大模型节点配置 (从 .env 中安全读取)
+# -------------------------------------------------------------------------
+# 🌟 MemPalace 长期记忆引擎挂载 (适配 3.1.0 API)
+# -------------------------------------------------------------------------
+try:
+    from mempalace.palace import get_collection as mp_get_collection
+    from mempalace.searcher import search_memories as mp_search_memories
+    MEMPALACE_ENABLED = True
+    logger.success("🧠 [MemPalace] 长期记忆图谱模块已成功挂载！")
+except ImportError:
+    MEMPALACE_ENABLED = False
+    logger.info("⚠️ [MemPalace] 未安装 MemPalace 库，跳过长期图谱记忆。")
+
+# -------------------------------------------------------------------------
+# 🌟 静态知识库引擎挂载
+# -------------------------------------------------------------------------
+try:
+    from .knowledge import search_knowledge, ingest_docs
+    KNOWLEDGE_ENABLED = True
+    logger.success("📚 [知识库] 静态知识检索模块已成功挂载！")
+except ImportError:
+    KNOWLEDGE_ENABLED = False
+    logger.info("⚠️ [知识库] 知识库模块未就绪，跳过静态知识检索。")
+
 LLAMA_SERVER_URL = getattr(env_config, "llama_server_url", "http://127.0.0.1:8080/v1/chat/completions")
 ROUTER_URL = getattr(env_config, "router_url", "http://127.0.0.1:8081/v1/chat/completions")
 
 # 仅保留人设状态字典（随生命周期重置即可，无需持久化）
 AI_PERSONA_STATE = {}
 MAX_HISTORY_ROUNDS = 5
+
+# -------------------------------------------------------------------------
+# MemPalace 辅助函数：写入 & 检索
+# -------------------------------------------------------------------------
+import hashlib as _hashlib
+
+def _get_palace_path() -> str:
+    """获取 MemPalace 存储路径"""
+    p = getattr(env_config, "mempalace_path", "") or ""
+    if not p:
+        p = os.path.join(os.path.dirname(__file__), "../../../data/mempalace_db")
+    return os.path.abspath(p)
+
+def _mp_save_interaction(uid_hash: str, user_text: str, ai_text: str):
+    """将一轮对话写入 MemPalace 的 ChromaDB collection"""
+    palace_path = _get_palace_path()
+    collection = mp_get_collection(palace_path)
+    content = f"用户说: {user_text}\nAI回复: {ai_text}"
+    doc_id = f"drawer_chat_{uid_hash[:16]}_{_hashlib.sha256((content + datetime.now().isoformat()).encode()).hexdigest()[:24]}"
+    collection.add(
+        documents=[content],
+        ids=[doc_id],
+        metadatas=[{
+            "wing": "qq_chat",
+            "room": uid_hash[:16],
+            "source_file": f"live_chat_{uid_hash[:8]}",
+            "filed_at": datetime.now().isoformat(),
+            "ingest_mode": "live",
+        }]
+    )
+    logger.info(f"🧠 [MemPalace] 对话已写入长期记忆: {uid_hash[:8]}...")
+
+def _mp_search(query: str, uid_hash: str) -> str:
+    """从 MemPalace 检索长期记忆，返回拼接文本"""
+    palace_path = _get_palace_path()
+    result = mp_search_memories(
+        query=query,
+        palace_path=palace_path,
+        room=uid_hash[:16],
+        n_results=3
+    )
+    if isinstance(result, dict) and "error" in result:
+        return ""
+    hits = result.get("results", []) if isinstance(result, dict) else []
+    if not hits:
+        return ""
+    parts = []
+    for h in hits:
+        if h.get("similarity", 0) > 0.3:
+            parts.append(h["text"])
+    if parts:
+        logger.info(f"🧠 [MemPalace] 检索到 {len(parts)} 条长期记忆 (uid={uid_hash[:8]}...)")
+    return "\n---\n".join(parts) if parts else ""
 
 def clean_mc_log(log_text: str, max_length: int = 800) -> str:
     """长文本清洗工具：防止崩溃日志撑爆大模型内存"""
@@ -83,7 +158,7 @@ async def process_ai_request(
                 raw_bytes = None
                 if str(target_path).startswith("http"):
                     async with aiohttp.ClientSession() as session:
-                        async with session.get(target_path, timeout=15) as resp:
+                        async with session.get(target_path, timeout=aiohttp.ClientTimeout(total=15)) as resp:
                             if resp.status == 200: raw_bytes = await resp.read()
                 elif os.path.exists(target_path):
                     with open(target_path, "rb") as f: raw_bytes = f.read()
@@ -109,13 +184,13 @@ async def process_ai_request(
         router_sys = "你是一个专业推荐系统。评估输入推荐temperature(浮点数): 硬核代码/排错 0.1, 翻译 0.3, 日常 0.5, 闲聊发癫 0.9。只回复数字！"
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(ROUTER_URL, json={"model": "qwen2.5-0.5b", "messages": [{"role": "system", "content": router_sys}, {"role": "user", "content": raw_prompt}], "temperature": 0.1, "max_tokens": 5}, timeout=5) as resp:
+                async with session.post(ROUTER_URL, json={"model": "qwen2.5-0.5b", "messages": [{"role": "system", "content": router_sys}, {"role": "user", "content": raw_prompt}], "temperature": 0.1, "max_tokens": 5}, timeout=aiohttp.ClientTimeout(total=5)) as resp:
                     if resp.status == 200:
                         router_reply = (await resp.json())["choices"][0]["message"]["content"].strip()
                         match = re.search(r"\d+(?:\.\d+)?", router_reply)
                         if match: 
                             raw_temp = float(match.group())
-                            dynamic_temp = 0.1 if raw_temp==1.0 else 0.3 if raw_temp==2.0 else 0.5 if raw_temp==3.0 else 0.9 if raw_temp>=4.0 else min(raw_temp, 2.0)
+                            dynamic_temp = min(raw_temp, 2.0)
                             logger.success(f"🧠 [路由诊断] 推荐温度: {dynamic_temp}")
         except Exception as e: logger.warning(f"路由超时 (目标 {ROUTER_URL}): {e}")
 
@@ -143,7 +218,28 @@ async def process_ai_request(
         elif current_type == "win98": await matcher.send("💾 [MS-DOS 启动] 正在挂载 Windows 98 SE 核心文件...")
     AI_PERSONA_STATE[session_id] = current_type
 
-    # 5. 组装终极防篡改提示词
+    # 5. 挂载 MemPalace 长期记忆检索
+    long_term_memory = ""
+    if MEMPALACE_ENABLED and raw_prompt:
+        try:
+            mem_results = await asyncio.to_thread(_mp_search, raw_prompt, hashed_uid)
+            if mem_results and len(mem_results.strip()) > 0:
+                long_term_memory = f"【PRTS 长期图谱记忆库检索结果】：\n{mem_results}\n\n"
+        except Exception as e:
+            logger.warning(f"⚠️ [MemPalace] 记忆检索失败: {e}")
+
+    # 5b. 挂载静态知识库检索
+    knowledge_context = ""
+    if KNOWLEDGE_ENABLED and raw_prompt:
+        try:
+            kb_results = await asyncio.to_thread(search_knowledge, raw_prompt, 3)
+            if kb_results:
+                knowledge_context = "【PRTS 知识库检索结果】：\n" + "\n---\n".join(kb_results) + "\n\n"
+                logger.info(f"📚 [知识库] 检索到 {len(kb_results)} 条相关知识")
+        except Exception as e:
+            logger.warning(f"⚠️ [知识库] 检索失败: {e}")
+
+    # 6. 组装终极提示词
     sys_prompt = (
         f"{custom_persona}\n\n"
         "【系统最高权限指令区】\n"
@@ -157,18 +253,11 @@ async def process_ai_request(
 
     # 6. 物理隔离提问与资料
     final_user_text = ""
+    if knowledge_context: final_user_text += knowledge_context
+    if long_term_memory: final_user_text += long_term_memory
     if reply_text: final_user_text += f"【玩家引用的历史消息】：\n{reply_text}\n\n"
     if file_text: final_user_text += f"【附加参考资料】：\n{file_text}\n\n【请根据参考资料，回答真实提问】\n"
     final_user_text += f"【真实提问】：\n{raw_prompt if raw_prompt else '请描述图片或总结资料。'}"
-
-    user_contents = [{"type": "text", "text": final_user_text}]
-    if image_urls:
-        async with aiohttp.ClientSession() as session:
-            for url in image_urls:
-                async with session.get(url, timeout=15) as img_resp:
-                    if img_resp.status == 200:
-                        img_bytes = await img_resp.read()
-                        user_contents.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64.b64encode(img_bytes).decode('utf-8')}"}})
 
     # 7. 请求主脑 (从 MariaDB 获取上下文历史)
     messages_payload = [{"role": "system", "content": sys_prompt}]
@@ -177,12 +266,23 @@ async def process_ai_request(
     db_history = await fetch_chat_history_from_db(hashed_uid, MAX_HISTORY_ROUNDS)
     messages_payload.extend(db_history)
     
-    messages_payload.append({"role": "user", "content": user_contents})
+    # 🌟 关键修复：有图片时用多模态列表格式，纯文本时用字符串格式（否则 LLM 返回 500）
+    if image_urls:
+        user_contents = [{"type": "text", "text": final_user_text}]
+        async with aiohttp.ClientSession() as session:
+            for url in image_urls:
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as img_resp:
+                    if img_resp.status == 200:
+                        img_bytes = await img_resp.read()
+                        user_contents.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64.b64encode(img_bytes).decode('utf-8')}"}})
+        messages_payload.append({"role": "user", "content": user_contents})
+    else:
+        messages_payload.append({"role": "user", "content": final_user_text})
 
     payload = {"model": "gemma-3-4b-it", "messages": messages_payload, "temperature": dynamic_temp, "max_tokens": config.get("max_tokens", 8000)}
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(LLAMA_SERVER_URL, json=payload, timeout=180) as response:
+        async with session.post(LLAMA_SERVER_URL, json=payload, timeout=aiohttp.ClientTimeout(total=180)) as response:
             if response.status == 200:
                 ai_reply = (await response.json())["choices"][0]["message"]["content"].strip()
                 
@@ -193,7 +293,18 @@ async def process_ai_request(
                 # 👇 关键修复点：使用 "assistant" 替代 "ai"，解决 500 报错！
                 await save_message_to_db(hashed_uid, "assistant", ai_reply)
 
-                # 8. 动态发送策略
+                if MEMPALACE_ENABLED:
+                    def _mp_task_done(t):
+                        if t.exception():
+                            logger.error(f"🧠 [MemPalace] 异步写入失败: {t.exception()}")
+                    try:
+                        task = asyncio.create_task(asyncio.to_thread(
+                            _mp_save_interaction, hashed_uid, history_q, ai_reply
+                        ))
+                        task.add_done_callback(_mp_task_done)
+                    except Exception as e:
+                        logger.error(f"MemPalace 写入失败: {e}")
+
                 if mode == "chat" and not force_forward:
                     paragraphs = [p.strip() for p in re.split(r'\n\s*\n', ai_reply) if p.strip()]
                     for i, p in enumerate(paragraphs):

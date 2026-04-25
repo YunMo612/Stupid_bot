@@ -37,12 +37,16 @@ async def request_melotts(text: str) -> str:
 # 🛡️ 方案 A：100% 稳定的语音条 (PTT) 回复方案
 # 触发方式：在群里 @机器人 说一段话
 # ==========================================
-ai_voice_chat = on_message(rule=to_me(), priority=10, block=False)
+ai_voice_chat = on_message(rule=to_me(), priority=98, block=False)
 
 @ai_voice_chat.handle()
 async def handle_ai_voice_message(bot: Bot, event: GroupMessageEvent):
     user_text = event.get_plaintext().strip()
     if not user_text:
+        return
+
+    # 跳过指令消息，避免与其他指令冲突
+    if user_text.startswith("/"):
         return
 
     # 这里可以接入你的 LLM 逻辑

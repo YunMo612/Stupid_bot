@@ -15,3 +15,4 @@ __plugin_meta__ = PluginMetadata(
 from . import invite
 from . import bind_sign
 from . import query
+from . import data_manager

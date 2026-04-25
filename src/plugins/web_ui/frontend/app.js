@@ -397,7 +397,7 @@ window.loadLogs = function() { if (ws) ws.close(); initLogWebSocket(); };
 function initLogWebSocket() {
     const consoleBox = document.getElementById('log-console'); if(!consoleBox) return;
     consoleBox.innerHTML = '<span class="log-info">[SYSTEM] 连接管道...</span>';
-    ws = new WebSocket(`${window.location.protocol==='https:'?'wss:':'ws:'}//${window.location.host}/api/logs/ws`);
+    ws = new WebSocket(`${window.location.protocol==='https:'?'wss:':'ws:'}//${window.location.host}/api/logs/stream`);
     ws.onmessage = function(event) {
         const data = JSON.parse(event.data);
         if (data.status === 'success') {

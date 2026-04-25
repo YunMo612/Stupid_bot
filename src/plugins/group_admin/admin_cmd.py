@@ -130,7 +130,7 @@ async def handle_admin_del(event: MessageEvent, args: Message = CommandArg()):
 
 
 # ==================== C. 开发者强制重置 ====================
-test_matcher = on_command("test", aliases={"fortest"})
+test_matcher = on_command("dev_reset", aliases={"fortest"})
 @test_matcher.handle()
 async def handle_test(event: MessageEvent, args: Message = CommandArg()):
     if isinstance(event, GroupMessageEvent): await test_matcher.finish("⚠️ 请在私聊中使用！")
