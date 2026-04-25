@@ -102,6 +102,7 @@ if [ -z "$TARGET_USER" ]; then echo "用户名不能为空，退出。"; exit 1;
 sudo mkdir -p "$USER_HOME"
 
 BOT_QQ=$(get_input "机器人配置" "请输入您准备作为机器人的 QQ 号码:\n(这将在稍后用于配置 NapCat 与环境文件)" "123456789")
+echo "DEBUG: BOT_QQ=$BOT_QQ"
 
 # --- 4. 基础环境安装 + Python 版本校验 ---
 advance_step "安装基础环境依赖 (apt-get)"
